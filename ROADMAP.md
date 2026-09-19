@@ -20,10 +20,10 @@
 
 ## Phase 2 — 可选 AI Tutor
 
-- 实现服务端 OpenAI-compatible provider adapter 与可测试 mock provider
-- 实现 SSE 流式返回、取消、超时和错误降级
-- 支持 `zero_base`、`wrong_reason`、`interview_scope`、`socratic`、`similar_question`、`free_chat`
-- 建立标准答案不可变与提交前不可泄露测试
+- [x] 实现服务端 OpenAI-compatible provider adapter 与可测试 mock provider
+- [x] 实现 SSE 流式返回、取消、超时和错误降级
+- [x] 支持 `zero_base`、`wrong_reason`、`interview_scope`、`socratic`、`similar_question`、`free_chat`
+- [x] 建立标准答案不可变与提交前不可泄露测试
 
 ## Phase 3 — 内容工具与发布准备
 

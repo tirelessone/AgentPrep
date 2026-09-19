@@ -2,7 +2,7 @@
 
 AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学习 PWA。目标是在无后端时仍可完成刷题、错题、收藏、复习以及数据导入导出，并为题库来源和内容审核提供可追溯记录。
 
-> 当前状态：Phase 1 本地学习闭环。可离线刷原创小样题库、记录错题、收藏、复习并导入导出学习数据；AI Tutor 尚未接入。
+> 当前状态：Phase 2。可离线完成学习闭环；提交答案后可选择连接服务端 AI Tutor。Tutor 不可用时不会影响本地学习。
 
 ## 原创贡献边界
 
@@ -32,6 +32,8 @@ pnpm dev
 ```
 
 Web 默认运行在 `http://localhost:5173`，Server 默认运行在 `http://localhost:3000`。
+
+AI Tutor 是可选能力。复制 `apps/server/.env.example` 为本地 `.env` 并仅在 Server 进程设置 `OPENAI_API_KEY`、`OPENAI_BASE_URL` 和 `OPENAI_MODEL`。不要创建任何 `VITE_*` 密钥变量。接口和降级语义见 [AI Tutor 文档](docs/ai-tutor.md)。
 
 ## 验证
 

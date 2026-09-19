@@ -90,3 +90,31 @@ test('migrates a version 1 database without losing settings', async ({ page }) =
   // Dexie maps its logical version 2 to native IndexedDB version 20.
   expect(migrated).toEqual({ version: 20, value: 'light' });
 });
+
+test('shows Tutor only after submission and renders SSE output', async ({ page }) => {
+  let tutorPayload: { context?: { submitted?: boolean; correctChoiceIds?: string[] } } = {};
+  await page.route('**/api/tutor/stream', async (route) => {
+    tutorPayload = route.request().postDataJSON() as typeof tutorPayload;
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/event-stream',
+      body: [
+        'event: token\ndata: {"text":"面试时先说明工具调用边界。"}',
+        'event: done\ndata: {}',
+        '',
+      ].join('\n\n'),
+    });
+  });
+
+  await page.goto('/');
+  await page.getByRole('button', { name: /开始刷题/ }).click();
+  await expect(page.getByRole('heading', { name: 'AI Tutor' })).toHaveCount(0);
+  await page.locator('label.choice').filter({ hasText: '受控执行器校验并执行工具调用' }).click();
+  await page.getByRole('button', { name: '提交答案' }).click();
+  await expect(page.getByRole('heading', { name: 'AI Tutor' })).toBeVisible();
+  await page.getByRole('button', { name: '询问 Tutor' }).click();
+  await expect(page.getByText('面试时先说明工具调用边界。')).toBeVisible();
+  expect(tutorPayload).toMatchObject({
+    context: { submitted: true, correctChoiceIds: ['b'] },
+  });
+});

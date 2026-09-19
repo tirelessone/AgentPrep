@@ -6,7 +6,15 @@ import {
 
 import originalManifest from '../../../content/manifests/original-v1.json';
 
-export const questionManifest = publishedQuestionManifestSchema.parse(originalManifest);
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    Object.values(value).forEach((child) => deepFreeze(child));
+  }
+  return value;
+}
+
+export const questionManifest = deepFreeze(publishedQuestionManifestSchema.parse(originalManifest));
 
 const questionsById = new Map(
   questionManifest.questions.map((question) => [question.id, question] as const),

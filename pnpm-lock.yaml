@@ -59,6 +59,12 @@ importers:
 
   apps/server:
     dependencies:
+      '@agentprep/tutor-core':
+        specifier: workspace:*
+        version: link:../../packages/tutor-core
+      dotenv:
+        specifier: ^18.0.0
+        version: 18.0.0
       fastify:
         specifier: ^5.6.0
         version: 5.12.5
@@ -75,6 +81,9 @@ importers:
       '@agentprep/question-schema':
         specifier: workspace:*
         version: link:../../packages/question-schema
+      '@agentprep/tutor-core':
+        specifier: workspace:*
+        version: link:../../packages/tutor-core
       dexie:
         specifier: ^4.2.0
         version: 4.4.6
@@ -112,7 +121,11 @@ importers:
         specifier: ^4.1.5
         version: 4.6.5
 
-  packages/tutor-core: {}
+  packages/tutor-core:
+    dependencies:
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
 
   tests/e2e:
     devDependencies:
@@ -1583,6 +1596,11 @@ packages:
 
   dom-accessibility-api@0.6.3:
     resolution: {integrity: sha512-7ZgogeTnjuHbo+ct10G9Ffp0mif17idi0IyWNVA/wcwcm7NPOD/WEHVP3n7n3MhXqxoIYm8d6MuZohYWIZ4T3w==}
+
+  dotenv@18.0.0:
+    resolution: {integrity: sha512-16YSUvsKtKbwrTbESvtTSZzzJUug6jdFdqiBFg9Q6Bk1JY9r0hAtrtTiWxdI9YrsgOTmkjZRdgU0n3LnwGpECw==}
+    engines: {node: '>=12'}
+    hasBin: true
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -4488,6 +4506,8 @@ snapshots:
   dom-accessibility-api@0.5.16: {}
 
   dom-accessibility-api@0.6.3: {}
+
+  dotenv@18.0.0: {}
 
   dunder-proto@1.0.1:
     dependencies:

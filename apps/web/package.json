@@ -11,6 +11,7 @@
   "dependencies": {
     "@agentprep/domain": "workspace:*",
     "@agentprep/question-schema": "workspace:*",
+    "@agentprep/tutor-core": "workspace:*",
     "dexie": "^4.2.0",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.1.1",

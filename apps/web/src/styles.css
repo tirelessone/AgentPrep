@@ -385,6 +385,79 @@ legend {
   line-height: 1.65;
 }
 
+.tutor-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgb(46 91 136 / 20%);
+  border-radius: 0.85rem;
+  background: #eef3f7;
+}
+.tutor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tutor-heading h3 {
+  margin: 0 0 1rem;
+  font:
+    500 1.55rem Georgia,
+    serif;
+}
+.streaming-dot {
+  color: #315f88;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.tutor-panel label {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  color: #505c69;
+  font-size: 0.76rem;
+  font-weight: 750;
+  text-align: left;
+}
+.tutor-panel select,
+.tutor-panel textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgb(24 32 51 / 17%);
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #182033;
+  resize: vertical;
+}
+.tutor-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+}
+.text-button {
+  border: 0;
+  background: transparent;
+  color: #8f4528;
+  font-weight: 800;
+}
+.tutor-answer {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border-radius: 0.65rem;
+  background: #fff;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.tutor-error {
+  margin: 0.8rem 0 0;
+  color: #963f2c;
+  line-height: 1.5;
+}
+.tutor-panel > small {
+  display: block;
+  margin-top: 0.8rem;
+  color: #707987;
+}
+
 .empty-state,
 .data-center {
   max-width: 44rem;

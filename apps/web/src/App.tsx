@@ -6,6 +6,7 @@ import type { QuestionPrompt, QuestionReveal, StudyAttempt } from '@agentprep/do
 import { exportStudyData, importStudyData } from './backup';
 import { questionManifest, questionPrompts, revealQuestion } from './content';
 import { db } from './db';
+import { TutorPanel } from './TutorPanel';
 import {
   getDueReviewQuestionIds,
   getLatestWrongQuestionIds,
@@ -159,13 +160,16 @@ function QuestionSession({
         </fieldset>
 
         {result && (
-          <div
-            className={`answer-panel ${result.attempt.correct ? 'success' : 'error'}`}
-            role="status"
-          >
-            <strong>{result.attempt.correct ? '回答正确' : '这次没答对'}</strong>
-            <p>{result.reveal.explanation}</p>
-          </div>
+          <>
+            <div
+              className={`answer-panel ${result.attempt.correct ? 'success' : 'error'}`}
+              role="status"
+            >
+              <strong>{result.attempt.correct ? '回答正确' : '这次没答对'}</strong>
+              <p>{result.reveal.explanation}</p>
+            </div>
+            <TutorPanel prompt={question} reveal={result.reveal} attempt={result.attempt} />
+          </>
         )}
 
         <button
