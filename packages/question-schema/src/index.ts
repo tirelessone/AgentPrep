@@ -68,6 +68,13 @@ export const questionManifestSchema = z.object({
   manifestId: z.string().min(1),
   contentVersion: z.string().min(1),
   generatedAt: z.iso.datetime(),
+  review: z
+    .object({
+      reviewer: z.string().min(1),
+      reviewedAt: z.iso.datetime(),
+      licenseEvidence: z.string().min(1),
+    })
+    .optional(),
   questions: z.array(multipleChoiceQuestionSchema),
 });
 

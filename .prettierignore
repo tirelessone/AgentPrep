@@ -3,3 +3,5 @@ coverage
 playwright-report
 test-results
 pnpm-lock.yaml
+content/PROVENANCE_REPORT.md
+THIRD_PARTY_NOTICES.md

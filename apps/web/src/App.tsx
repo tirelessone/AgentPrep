@@ -6,6 +6,7 @@ import type { QuestionPrompt, QuestionReveal, StudyAttempt } from '@agentprep/do
 import { exportStudyData, importStudyData } from './backup';
 import { questionManifest, questionPrompts, revealQuestion } from './content';
 import { db } from './db';
+import { InstallButton } from './InstallButton';
 import { TutorPanel } from './TutorPanel';
 import {
   getDueReviewQuestionIds,
@@ -360,10 +361,13 @@ export function App() {
         <button className="brand" onClick={() => setView('home')} aria-label="返回 AgentPrep 首页">
           <span>AP</span> AgentPrep
         </button>
-        <span className={`network ${online ? '' : 'offline'}`} role="status">
-          <i aria-hidden="true" />
-          {online ? '本地数据已就绪' : '离线模式'}
-        </span>
+        <div className="topbar-actions">
+          <InstallButton />
+          <span className={`network ${online ? '' : 'offline'}`} role="status">
+            <i aria-hidden="true" />
+            {online ? '本地数据已就绪' : '离线模式'}
+          </span>
+        </div>
       </header>
 
       <main>

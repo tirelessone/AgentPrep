@@ -59,4 +59,18 @@ describe('App', () => {
     expect(requestBody).toMatchObject({ context: { submitted: true, correctChoiceIds: ['b'] } });
     expect(questionManifest.questions[0]!.correctChoiceIds).toEqual(verifiedAnswer);
   });
+
+  it('offers the browser install prompt when available', async () => {
+    const prompt = vi.fn(async () => undefined);
+    render(<App />);
+    const event = new Event('beforeinstallprompt', { cancelable: true });
+    Object.assign(event, {
+      prompt,
+      userChoice: Promise.resolve({ outcome: 'accepted', platform: 'web' }),
+    });
+    window.dispatchEvent(event);
+
+    fireEvent.click(await screen.findByRole('button', { name: '安装应用' }));
+    await waitFor(() => expect(prompt).toHaveBeenCalledOnce());
+  });
 });

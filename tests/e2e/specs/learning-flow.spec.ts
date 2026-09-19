@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 
 test('keeps answers hidden until submission and persists wrong answers', async ({ page }) => {
   await page.goto('/');
@@ -117,4 +118,54 @@ test('shows Tutor only after submission and renders SSE output', async ({ page }
   expect(tutorPayload).toMatchObject({
     context: { submitted: true, correctChoiceIds: ['b'] },
   });
+});
+
+test('publishes install metadata and has no serious accessibility violations', async ({ page }) => {
+  await page.goto('/');
+  const manifest = await page.request.get('/manifest.webmanifest');
+  expect(manifest.ok()).toBe(true);
+  await expect(manifest.json()).resolves.toMatchObject({
+    name: 'AgentPrep',
+    display: 'standalone',
+  });
+  await page.evaluate(async () => navigator.serviceWorker.ready);
+
+  const homeScan = await new AxeBuilder({ page }).analyze();
+  expect(
+    homeScan.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')),
+  ).toEqual([]);
+
+  await page.getByRole('button', { name: /开始刷题/ }).click();
+  const questionScan = await new AxeBuilder({ page }).analyze();
+  expect(
+    questionScan.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')),
+  ).toEqual([]);
+});
+
+test('restores a validated backup and exports it again', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: '数据' }).click();
+  const backup = {
+    schemaVersion: 1,
+    exportedAt: '2026-09-19T12:00:00.000Z',
+    data: {
+      attempts: [],
+      favorites: [{ questionId: 'agent-loop-001', createdAt: '2026-09-19T12:00:00.000Z' }],
+      reviews: [],
+      settings: [],
+    },
+  };
+  await page.getByLabel('选择 AgentPrep 备份文件').setInputFiles({
+    name: 'agentprep-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup)),
+  });
+  await expect(page.getByText('导入完成，当前设备的数据已恢复。')).toBeVisible();
+  await expect(page.locator('.data-summary div').nth(1)).toContainText('1道收藏');
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: '导出学习数据' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^agentprep-backup-\d{4}-\d{2}-\d{2}\.json$/);
 });

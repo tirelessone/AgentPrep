@@ -12,10 +12,15 @@
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "content:report": "pnpm --filter @agentprep/importers content:report",
+    "content:verify": "pnpm --filter @agentprep/importers content:verify",
+    "third-party:report": "node tools/quality/third-party-notices.mjs --write",
+    "third-party:verify": "node tools/quality/third-party-notices.mjs --check",
     "test": "vitest run",
     "test:e2e": "pnpm --filter @agentprep/e2e test:e2e",
     "build": "pnpm -r --if-present build",
-    "check": "pnpm format:check && pnpm lint && pnpm test && pnpm build && pnpm test:e2e"
+    "performance:check": "node tools/quality/check-bundle.mjs",
+    "check": "pnpm format:check && pnpm lint && pnpm content:verify && pnpm third-party:verify && pnpm test && pnpm build && pnpm performance:check && pnpm test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",

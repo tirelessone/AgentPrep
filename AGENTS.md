@@ -30,6 +30,8 @@
 - 共享边界优先使用 Zod schema，并从 schema 推导 TypeScript 类型。
 - 新功能必须包含与风险相称的单元、集成或 E2E 测试。
 - 每个阶段结束前运行 `pnpm format:check`、`pnpm lint`、`pnpm test`、`pnpm build` 和 `pnpm test:e2e`。
+- 内容变更后运行 `pnpm content:report` 和 `pnpm third-party:report`，并确保对应 verify 命令通过。
+- Web 生产构建必须满足 `pnpm performance:check` 的 JavaScript gzip 预算。
 - 提交保持单一目的，不混入生成物、密钥、无关格式化或题库批量变更。
 - 修改架构边界时新增或更新 ADR；不要悄悄改变既有决策。
 

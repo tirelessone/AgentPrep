@@ -83,6 +83,20 @@ input:focus-visible + .choice-key {
   font-size: 0.72rem;
   font-weight: 700;
 }
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.install-button {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgb(24 32 51 / 20%);
+  border-radius: 0.55rem;
+  background: rgb(255 255 255 / 45%);
+  color: #182033;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
 .network i {
   width: 0.5rem;
   height: 0.5rem;

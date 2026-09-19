@@ -4,6 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "import:legacy": "tsx src/cli/import-legacy.ts",
+    "review": "tsx src/cli/review-content.ts",
+    "content:report": "tsx src/cli/report-content.ts --write",
+    "content:verify": "tsx src/cli/report-content.ts --check"
+  },
+  "dependencies": {
+    "@agentprep/question-schema": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.13"
   }
 }

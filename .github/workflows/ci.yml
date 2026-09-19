@@ -22,7 +22,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
+      - run: pnpm content:verify
+      - run: pnpm third-party:verify
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm performance:check
       - run: pnpm --filter @agentprep/e2e exec playwright install --with-deps chromium
       - run: pnpm test:e2e
