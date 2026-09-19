@@ -3,6 +3,8 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+import { importanceSchema, subjectSchema } from '@agentprep/question-schema';
+
 import { importLegacyJson } from '../legacy-json.js';
 import { readFlags } from './args.js';
 
@@ -21,11 +23,14 @@ if (existsSync(outputPath)) throw new Error(`Refusing to overwrite ${outputPath}
 
 const sourceText = await readFile(inputPath, 'utf8');
 const manifest = importLegacyJson(JSON.parse(sourceText) as unknown, {
+  chapter: flags.require('chapter'),
   source: flags.require('source'),
   sourceVersion: flags.require('source-version'),
   license: flags.require('license'),
   manifestId: flags.require('manifest-id'),
   generatedAt: new Date().toISOString(),
+  importance: importanceSchema.parse(Number(flags.require('importance'))),
+  subject: subjectSchema.parse(flags.require('subject')),
 });
 await writeFile(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 process.stdout.write(`Quarantined ${manifest.questions.length} questions at ${outputPath}\n`);

@@ -27,7 +27,13 @@ describe('local study services', () => {
   it('records wrong answers and schedules an immediate review', async () => {
     const prompt = questionPrompts[0]!;
     const now = new Date('2026-09-19T08:00:00.000Z');
-    const attempt = await recordAttempt(database, prompt, revealQuestion(prompt.id), ['a'], now);
+    const attempt = await recordAttempt(
+      database,
+      prompt,
+      revealQuestion(prompt.id),
+      { type: 'single_choice', selectedChoiceId: 'a' },
+      now,
+    );
 
     expect(attempt.correct).toBe(false);
     await expect(getLatestWrongQuestionIds(database)).resolves.toEqual([prompt.id]);
@@ -45,7 +51,10 @@ describe('local study services', () => {
 
   it('round-trips validated learning data without question answers', async () => {
     const prompt = questionPrompts[0]!;
-    await recordAttempt(database, prompt, revealQuestion(prompt.id), ['b']);
+    await recordAttempt(database, prompt, revealQuestion(prompt.id), {
+      type: 'single_choice',
+      selectedChoiceId: 'b',
+    });
     await toggleFavorite(database, prompt.id);
 
     const exported = await exportStudyData(database, new Date('2026-09-19T09:00:00.000Z'));
@@ -56,6 +65,9 @@ describe('local study services', () => {
     try {
       await importStudyData(restored, exported);
       await expect(restored.attempts.count()).resolves.toBe(1);
+      await expect(restored.attempts.toCollection().first()).resolves.toMatchObject({
+        response: { type: 'single_choice', selectedChoiceId: 'b' },
+      });
       await expect(restored.favorites.get(prompt.id)).resolves.toMatchObject({
         questionId: prompt.id,
       });
@@ -70,6 +82,48 @@ describe('local study services', () => {
 
     await expect(importStudyData(database, '{"schemaVersion":99}')).rejects.toThrow();
     await expect(database.favorites.count()).resolves.toBe(1);
+  });
+
+  it('validates and grades multiple-choice responses without depending on order', async () => {
+    const prompt = questionPrompts.find((item) => item.id === 'rag-grounding-001')!;
+    const reveal = revealQuestion(prompt.id);
+    const attempt = await recordAttempt(database, prompt, reveal, {
+      type: 'multiple_choice',
+      selectedChoiceIds: ['e', 'a', 'c'],
+    });
+    expect(attempt.correct).toBe(true);
+    await expect(
+      recordAttempt(database, prompt, reveal, {
+        type: 'multiple_choice',
+        selectedChoiceIds: ['a', 'missing'],
+      }),
+    ).rejects.toThrow('not valid');
+  });
+
+  it('grades true/false responses using a boolean answer', async () => {
+    const prompt = questionPrompts.find((item) => item.id === 'temperature-determinism-001')!;
+    const attempt = await recordAttempt(database, prompt, revealQuestion(prompt.id), {
+      type: 'true_false',
+      answer: false,
+    });
+    expect(attempt).toMatchObject({
+      correct: true,
+      selectedChoiceIds: [],
+      response: { type: 'true_false', answer: false },
+    });
+  });
+
+  it('records oral self-assessment without pretending it has choices', async () => {
+    const prompt = questionPrompts.find((item) => item.id === 'agent-loop-oral-001')!;
+    const attempt = await recordAttempt(database, prompt, revealQuestion(prompt.id), {
+      type: 'oral',
+      selfAssessment: 'needs_review',
+    });
+    expect(attempt).toMatchObject({
+      correct: false,
+      selectedChoiceIds: [],
+      response: { type: 'oral', selfAssessment: 'needs_review' },
+    });
   });
 });
 

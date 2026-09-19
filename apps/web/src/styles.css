@@ -320,6 +320,12 @@ legend {
     500 clamp(1.35rem, 6vw, 2rem)/1.45 Georgia,
     serif;
 }
+.question-hint {
+  margin: -0.8rem 0 1rem;
+  color: #6a7280;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
 .choices {
   display: grid;
   gap: 0.7rem;
@@ -397,6 +403,47 @@ legend {
   margin: 0.45rem 0 0;
   color: #4f5967;
   line-height: 1.65;
+}
+
+.oral-question h3 {
+  margin: 0;
+  font:
+    500 clamp(1.35rem, 6vw, 2rem) / 1.45 Georgia,
+    serif;
+}
+.oral-question p,
+.oral-answer p,
+.oral-answer li {
+  color: #4f5967;
+  line-height: 1.65;
+}
+.oral-answer {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-left: 0.3rem solid #2e5b88;
+  border-radius: 0.55rem;
+  background: #eef4f8;
+}
+.oral-answer h3,
+.oral-answer h4 {
+  margin: 0 0 0.5rem;
+}
+.oral-answer h4 {
+  margin-top: 1rem;
+}
+.oral-answer ul {
+  margin: 0;
+  padding-left: 1.3rem;
+}
+.oral-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+.oral-review-notice {
+  background: #f6e7df;
+  color: #7a3d2a !important;
 }
 
 .tutor-panel {

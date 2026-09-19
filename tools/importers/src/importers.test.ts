@@ -15,11 +15,14 @@ const legacy = [
 ];
 
 const importOptions = {
+  chapter: 'agent-runtime',
   source: 'https://example.test/repository',
   sourceVersion: 'abc123',
   license: 'CC-BY-4.0',
   manifestId: 'example-import',
   generatedAt: '2026-09-19T10:00:00.000Z',
+  importance: 4 as const,
+  subject: 'agent' as const,
 };
 
 describe('legacy importer', () => {
@@ -27,7 +30,11 @@ describe('legacy importer', () => {
     const manifest = importLegacyJson(legacy, importOptions);
     expect(manifest.questions[0]).toMatchObject({
       id: 'imported-q-1',
-      correctChoiceIds: ['choice-2'],
+      type: 'single_choice',
+      correctChoiceId: 'choice-2',
+      subject: 'agent',
+      chapter: 'agent-runtime',
+      importance: 4,
       provenance: {
         source: 'https://example.test/repository#q-1',
         sourceVersion: 'abc123',

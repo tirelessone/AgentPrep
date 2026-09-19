@@ -4,7 +4,7 @@
 
 ## 1. 转换到隔离区
 
-当前 importer 接受一个 JSON 数组，每项包含 `id`、`question`、`options`、`answer`，可选 `explanation`、`topics` 和 `difficulty`。数字答案按零起始下标解释，字符串答案可使用 A/B/C 标签或完整选项文本。
+当前 legacy importer 接受一个 JSON 数组，每项包含 `id`、`question`、`options`、`answer`，可选 `explanation`、`topics` 和 `difficulty`。数字答案按零起始下标解释，字符串答案可使用 A/B/C 标签或完整选项文本。该兼容入口只转换为 `single_choice`；多选、判断和口述题必须直接按 Question Schema v2 建模，避免根据旧数据猜测题型。
 
 ```bash
 pnpm --filter @agentprep/importers import:legacy -- \
@@ -13,10 +13,13 @@ pnpm --filter @agentprep/importers import:legacy -- \
   --source https://example.com/repository \
   --source-version COMMIT_SHA \
   --license CC-BY-4.0 \
+  --subject agent \
+  --chapter Agent基础 \
+  --importance 3 \
   --manifest-id candidate-bank
 ```
 
-输出只能进入 `content/quarantine`，默认状态为 `unverified`。命令拒绝 `unknown`、`unlicensed` 等模糊许可证，并拒绝覆盖已有文件。
+`--subject` 必须是 Question Schema v2 定义的学科之一，`--importance` 必须为 1–5。旧输入的 `topics` 会转换为 `knowledgePoints`。输出只能进入 `content/quarantine`，默认状态为 `unverified`。命令拒绝 `unknown`、`unlicensed` 等模糊许可证，并拒绝覆盖已有文件。
 
 ## 2. 人工审核
 

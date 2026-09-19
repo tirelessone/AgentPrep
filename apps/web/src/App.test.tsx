@@ -36,7 +36,10 @@ describe('App', () => {
   });
 
   it('sends answers only after submission and cannot mutate the verified question', async () => {
-    const verifiedAnswer = [...questionManifest.questions[0]!.correctChoiceIds];
+    const firstQuestion = questionManifest.questions[0]!;
+    if (firstQuestion.type !== 'single_choice')
+      throw new Error('Expected the first demo to be single choice.');
+    const verifiedAnswer = firstQuestion.correctChoiceId;
     let requestBody: unknown;
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       requestBody = JSON.parse(String(init?.body));
@@ -57,7 +60,7 @@ describe('App', () => {
 
     expect(await screen.findByText('保持标准答案不变。')).toBeInTheDocument();
     expect(requestBody).toMatchObject({ context: { submitted: true, correctChoiceIds: ['b'] } });
-    expect(questionManifest.questions[0]!.correctChoiceIds).toEqual(verifiedAnswer);
+    expect(firstQuestion.correctChoiceId).toBe(verifiedAnswer);
   });
 
   it('offers the browser install prompt when available', async () => {

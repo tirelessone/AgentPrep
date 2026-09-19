@@ -2,12 +2,26 @@ import { z } from 'zod';
 
 import type { AgentPrepDatabase } from './db';
 
+const responseSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('single_choice'), selectedChoiceId: z.string().min(1) }),
+  z.object({
+    type: z.literal('multiple_choice'),
+    selectedChoiceIds: z.array(z.string().min(1)).min(1),
+  }),
+  z.object({ type: z.literal('true_false'), answer: z.boolean() }),
+  z.object({
+    type: z.literal('oral'),
+    selfAssessment: z.enum(['understood', 'needs_review']),
+  }),
+]);
+
 const attemptSchema = z.object({
   id: z.string().min(1),
   questionId: z.string().min(1),
   questionVersion: z.string().min(1),
   attemptedAt: z.iso.datetime(),
   selectedChoiceIds: z.array(z.string().min(1)),
+  response: responseSchema.optional(),
   correct: z.boolean(),
 });
 

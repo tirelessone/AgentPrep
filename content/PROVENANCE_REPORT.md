@@ -5,7 +5,7 @@
 ## Summary
 
 - Published manifests: 1
-- Reviewed questions: 5
+- Reviewed questions: 8
 - Source kinds: original
 - Licenses: CC-BY-4.0
 
@@ -13,14 +13,17 @@
 
 | Manifest | Content version | Questions | SHA-256 |
 | --- | --- | ---: | --- |
-| content/manifests/original-v1.json | 1.0.0 | 5 | `69a39c8dcd67e08f29bf2fa35440ec4fdcf7007e702832439ed4e180bac855e7` |
+| content/manifests/original-v2.json | 2.0.0 | 8 | `eb5ae0a507666185d3755d304e0d0e9014f752ab0e7c73749078f567b7b33e2e` |
 
 ## Question provenance
 
 | Question ID | Source | Source version | License | Transform | Status |
 | --- | --- | --- | --- | --- | --- |
-| agent-loop-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v1 | reviewed |
-| sse-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v1 | reviewed |
-| prompt-injection-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v1 | reviewed |
-| eval-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v1 | reviewed |
-| idempotency-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v1 | reviewed |
+| agent-loop-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |
+| sse-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |
+| prompt-injection-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |
+| eval-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |
+| idempotency-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |
+| rag-grounding-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |
+| temperature-determinism-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |
+| agent-loop-oral-001 | AgentPrep editorial | 2026-09-19 | CC-BY-4.0 | authored-directly; editorial-review-v2 | reviewed |

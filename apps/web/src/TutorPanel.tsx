@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 
 import { tutorModes, type TutorMode } from '@agentprep/tutor-core';
-import type { QuestionPrompt, QuestionReveal, StudyAttempt } from '@agentprep/domain';
+import type { ChoiceQuestionPrompt, ChoiceQuestionReveal, StudyAttempt } from '@agentprep/domain';
 
 import { streamTutor, TutorClientError } from './tutor-client';
 
@@ -19,8 +19,8 @@ export function TutorPanel({
   reveal,
   attempt,
 }: {
-  prompt: QuestionPrompt;
-  reveal: QuestionReveal;
+  prompt: ChoiceQuestionPrompt;
+  reveal: ChoiceQuestionReveal;
   attempt: StudyAttempt;
 }) {
   const [mode, setMode] = useState<TutorMode>(attempt.correct ? 'interview_scope' : 'wrong_reason');
@@ -33,6 +33,8 @@ export function TutorPanel({
   const controllerRef = useRef<AbortController | undefined>(undefined);
 
   async function askTutor() {
+    const correctChoiceIds =
+      reveal.type === 'single_choice' ? [reveal.correctChoiceId] : [...reveal.correctChoiceIds];
     const controller = new AbortController();
     controllerRef.current = controller;
     setAnswer('');
@@ -49,7 +51,7 @@ export function TutorPanel({
             prompt: prompt.prompt,
             choices: [...prompt.choices],
             selectedChoiceIds: [...attempt.selectedChoiceIds],
-            correctChoiceIds: [...reveal.correctChoiceIds],
+            correctChoiceIds,
             explanation: reveal.explanation,
           },
         },

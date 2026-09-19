@@ -1,14 +1,34 @@
 import { z } from 'zod';
 
+const nonEmptyStringSchema = z.string().trim().min(1);
+
+export const subjectSchema = z.enum([
+  'computer_network',
+  'operating_system',
+  'data_structure',
+  'mysql',
+  'llm',
+  'agent',
+  'machine_learning',
+]);
+
+export const difficultySchema = z.enum(['foundation', 'intermediate', 'advanced']);
+export const importanceSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+]);
 export const reviewStatusSchema = z.enum(['unverified', 'reviewed', 'rejected']);
 
 export const provenanceSchema = z
   .object({
     kind: z.enum(['original', 'licensed_external', 'ai_generated']),
-    source: z.string().min(1),
-    sourceVersion: z.string().min(1),
-    license: z.string().min(1),
-    transform: z.string().min(1),
+    source: nonEmptyStringSchema,
+    sourceVersion: nonEmptyStringSchema,
+    license: nonEmptyStringSchema,
+    transform: nonEmptyStringSchema,
     reviewStatus: reviewStatusSchema,
   })
   .superRefine((value, context) => {
@@ -21,61 +41,113 @@ export const provenanceSchema = z
     }
   });
 
-export const multipleChoiceQuestionSchema = z
-  .object({
-    id: z.string().min(1),
-    version: z.string().min(1),
-    type: z.literal('multiple_choice'),
-    prompt: z.string().min(1),
-    topics: z.array(z.string().min(1)).min(1),
-    difficulty: z.enum(['foundation', 'intermediate', 'advanced']),
-    choices: z
-      .array(
-        z.object({
-          id: z.string().min(1),
-          text: z.string().min(1),
-        }),
-      )
-      .min(2),
-    correctChoiceIds: z.array(z.string().min(1)).min(1).readonly(),
-    explanation: z.string().min(1),
-    provenance: provenanceSchema,
-  })
-  .superRefine((question, context) => {
-    const choiceIds = question.choices.map((choice) => choice.id);
-    const uniqueChoiceIds = new Set(choiceIds);
-    if (uniqueChoiceIds.size !== choiceIds.length) {
+export const questionChoiceSchema = z.object({
+  id: nonEmptyStringSchema,
+  text: nonEmptyStringSchema,
+});
+
+const questionBaseSchema = z.object({
+  id: nonEmptyStringSchema,
+  version: nonEmptyStringSchema,
+  prompt: nonEmptyStringSchema,
+  subject: subjectSchema,
+  chapter: nonEmptyStringSchema,
+  knowledgePoints: z.array(nonEmptyStringSchema).min(1),
+  difficulty: difficultySchema,
+  importance: importanceSchema,
+  provenance: provenanceSchema,
+});
+
+const choiceQuestionBaseSchema = questionBaseSchema.extend({
+  choices: z.array(questionChoiceSchema).min(2),
+  explanation: nonEmptyStringSchema,
+});
+
+function validateChoices(
+  question: { choices: readonly { id: string }[] },
+  correctChoiceIds: readonly string[],
+  context: z.RefinementCtx,
+) {
+  const choiceIds = question.choices.map((choice) => choice.id);
+  const uniqueChoiceIds = new Set(choiceIds);
+  if (uniqueChoiceIds.size !== choiceIds.length) {
+    context.addIssue({
+      code: 'custom',
+      path: ['choices'],
+      message: 'Choice ids must be unique.',
+    });
+  }
+
+  if (new Set(correctChoiceIds).size !== correctChoiceIds.length) {
+    context.addIssue({
+      code: 'custom',
+      path: ['correctChoiceIds'],
+      message: 'Correct choice ids must be unique.',
+    });
+  }
+
+  correctChoiceIds.forEach((correctId) => {
+    if (!uniqueChoiceIds.has(correctId)) {
       context.addIssue({
         code: 'custom',
-        path: ['choices'],
-        message: 'Choice ids must be unique.',
+        path: ['correctChoiceIds'],
+        message: `Unknown correct choice id: ${correctId}`,
       });
     }
+  });
+}
 
-    for (const correctId of question.correctChoiceIds) {
-      if (!uniqueChoiceIds.has(correctId)) {
-        context.addIssue({
-          code: 'custom',
-          path: ['correctChoiceIds'],
-          message: `Unknown correct choice id: ${correctId}`,
-        });
-      }
-    }
+export const singleChoiceQuestionSchema = choiceQuestionBaseSchema
+  .extend({
+    type: z.literal('single_choice'),
+    correctChoiceId: nonEmptyStringSchema,
+  })
+  .superRefine((question, context) => {
+    validateChoices(question, [question.correctChoiceId], context);
   });
 
+export const multipleChoiceQuestionSchema = choiceQuestionBaseSchema
+  .extend({
+    type: z.literal('multiple_choice'),
+    correctChoiceIds: z.array(nonEmptyStringSchema).min(2).readonly(),
+  })
+  .superRefine((question, context) => {
+    validateChoices(question, question.correctChoiceIds, context);
+  });
+
+export const trueFalseQuestionSchema = questionBaseSchema.extend({
+  type: z.literal('true_false'),
+  answer: z.boolean(),
+  explanation: nonEmptyStringSchema,
+});
+
+export const oralQuestionSchema = questionBaseSchema.extend({
+  type: z.literal('oral'),
+  referenceAnswer: nonEmptyStringSchema,
+  keyPoints: z.array(nonEmptyStringSchema).min(1).readonly(),
+  followUps: z.array(nonEmptyStringSchema).min(1).readonly(),
+});
+
+export const questionSchema = z.discriminatedUnion('type', [
+  singleChoiceQuestionSchema,
+  multipleChoiceQuestionSchema,
+  trueFalseQuestionSchema,
+  oralQuestionSchema,
+]);
+
 export const questionManifestSchema = z.object({
-  schemaVersion: z.literal(1),
-  manifestId: z.string().min(1),
-  contentVersion: z.string().min(1),
+  schemaVersion: z.literal(2),
+  manifestId: nonEmptyStringSchema,
+  contentVersion: nonEmptyStringSchema,
   generatedAt: z.iso.datetime(),
   review: z
     .object({
-      reviewer: z.string().min(1),
+      reviewer: nonEmptyStringSchema,
       reviewedAt: z.iso.datetime(),
-      licenseEvidence: z.string().min(1),
+      licenseEvidence: nonEmptyStringSchema,
     })
     .optional(),
-  questions: z.array(multipleChoiceQuestionSchema),
+  questions: z.array(questionSchema).min(1),
 });
 
 export const publishedQuestionManifestSchema = questionManifestSchema.superRefine(
@@ -102,7 +174,15 @@ export const publishedQuestionManifestSchema = questionManifestSchema.superRefin
   },
 );
 
+export type Subject = z.infer<typeof subjectSchema>;
+export type Difficulty = z.infer<typeof difficultySchema>;
+export type Importance = z.infer<typeof importanceSchema>;
 export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
 export type Provenance = z.infer<typeof provenanceSchema>;
+export type QuestionChoice = z.infer<typeof questionChoiceSchema>;
+export type SingleChoiceQuestion = z.infer<typeof singleChoiceQuestionSchema>;
 export type MultipleChoiceQuestion = z.infer<typeof multipleChoiceQuestionSchema>;
+export type TrueFalseQuestion = z.infer<typeof trueFalseQuestionSchema>;
+export type OralQuestion = z.infer<typeof oralQuestionSchema>;
+export type Question = z.infer<typeof questionSchema>;
 export type QuestionManifest = z.infer<typeof questionManifestSchema>;

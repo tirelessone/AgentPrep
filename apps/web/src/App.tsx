@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
-import type { QuestionPrompt, QuestionReveal, StudyAttempt } from '@agentprep/domain';
+import type {
+  QuestionPrompt,
+  QuestionResponse,
+  QuestionReveal,
+  StudyAttempt,
+} from '@agentprep/domain';
 
 import { exportStudyData, importStudyData } from './backup';
 import { questionManifest, questionPrompts, revealQuestion } from './content';
 import { db } from './db';
+import { QuestionRenderer } from './features/practice/QuestionRenderer';
 import { InstallButton } from './InstallButton';
 import { TutorPanel } from './TutorPanel';
 import {
@@ -50,8 +56,9 @@ function QuestionSession({
   onExit: () => void;
 }) {
   const [index, setIndex] = useState(0);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [result, setResult] = useState<{ attempt: StudyAttempt; reveal: QuestionReveal }>();
+  const [response, setResponse] = useState<QuestionResponse>();
+  const [reveal, setReveal] = useState<QuestionReveal>();
+  const [attempt, setAttempt] = useState<StudyAttempt>();
   const question = questions[index];
   const favoriteIds = useLiveQuery(
     async () => (await db.favorites.toCollection().primaryKeys()).map(String),
@@ -62,8 +69,9 @@ function QuestionSession({
 
   useEffect(() => {
     setIndex(0);
-    setSelected([]);
-    setResult(undefined);
+    setResponse(undefined);
+    setReveal(undefined);
+    setAttempt(undefined);
   }, [questions]);
 
   if (!question) {
@@ -80,10 +88,26 @@ function QuestionSession({
   }
 
   async function submit() {
-    if (selected.length === 0 || result) return;
-    const reveal = revealQuestion(question!.id);
-    const attempt = await recordAttempt(db, question!, reveal, selected);
-    setResult({ attempt, reveal });
+    if (reveal) return;
+    const nextReveal = revealQuestion(question!.id);
+    if (question!.type === 'oral') {
+      setReveal(nextReveal);
+      return;
+    }
+    if (!response) return;
+    const nextAttempt = await recordAttempt(db, question!, nextReveal, response);
+    setReveal(nextReveal);
+    setAttempt(nextAttempt);
+  }
+
+  async function assessOral(selfAssessment: 'understood' | 'needs_review') {
+    if (!question || question.type !== 'oral' || !reveal || reveal.type !== 'oral' || attempt)
+      return;
+    const nextAttempt = await recordAttempt(db, question, reveal, {
+      type: 'oral',
+      selfAssessment,
+    });
+    setAttempt(nextAttempt);
   }
 
   function next() {
@@ -92,8 +116,9 @@ function QuestionSession({
       return;
     }
     setIndex((current) => current + 1);
-    setSelected([]);
-    setResult(undefined);
+    setResponse(undefined);
+    setReveal(undefined);
+    setAttempt(undefined);
   }
 
   return (
@@ -121,65 +146,88 @@ function QuestionSession({
 
       <article className="question-card">
         <div className="topic-row">
-          {question.topics.map((topic) => (
-            <span key={topic}>{topic}</span>
+          <span>{question.subject}</span>
+          <span>{question.chapter}</span>
+          {question.knowledgePoints.map((knowledgePoint) => (
+            <span key={knowledgePoint}>{knowledgePoint}</span>
           ))}
           <span>{question.difficulty}</span>
+          <span>重要度 {question.importance}</span>
         </div>
-        <fieldset disabled={Boolean(result)}>
-          <legend>{question.prompt}</legend>
-          <div className="choices">
-            {question.choices.map((choice, choiceIndex) => {
-              const checked = selected.includes(choice.id);
-              const isCorrect = result?.reveal.correctChoiceIds.includes(choice.id);
-              const isWrongSelection = Boolean(result && checked && !isCorrect);
-              return (
-                <label
-                  key={choice.id}
-                  className={[
-                    'choice',
-                    checked ? 'selected' : '',
-                    result && isCorrect ? 'correct' : '',
-                    isWrongSelection ? 'wrong' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <input
-                    type="radio"
-                    name={`answer-${question.id}`}
-                    value={choice.id}
-                    checked={checked}
-                    onChange={() => setSelected([choice.id])}
-                  />
-                  <span className="choice-key">{String.fromCharCode(65 + choiceIndex)}</span>
-                  <span>{choice.text}</span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
+        <QuestionRenderer
+          disabled={Boolean(reveal)}
+          question={question}
+          response={response}
+          reveal={reveal}
+          onChange={setResponse}
+        />
 
-        {result && (
+        {attempt && reveal && reveal.type !== 'oral' && (
           <>
-            <div
-              className={`answer-panel ${result.attempt.correct ? 'success' : 'error'}`}
-              role="status"
-            >
-              <strong>{result.attempt.correct ? '回答正确' : '这次没答对'}</strong>
-              <p>{result.reveal.explanation}</p>
+            <div className={`answer-panel ${attempt.correct ? 'success' : 'error'}`} role="status">
+              <strong>{attempt.correct ? '回答正确' : '这次没答对'}</strong>
+              <p>{reveal.explanation}</p>
             </div>
-            <TutorPanel prompt={question} reveal={result.reveal} attempt={result.attempt} />
+            {question.type === 'single_choice' && reveal.type === 'single_choice' && (
+              <TutorPanel prompt={question} reveal={reveal} attempt={attempt} />
+            )}
+            {question.type === 'multiple_choice' && reveal.type === 'multiple_choice' && (
+              <TutorPanel prompt={question} reveal={reveal} attempt={attempt} />
+            )}
           </>
         )}
 
-        <button
-          className="primary-button full-width"
-          disabled={selected.length === 0}
-          onClick={result ? next : () => void submit()}
-        >
-          {result ? (index + 1 === questions.length ? '完成练习' : '下一题') : '提交答案'}
-        </button>
+        {reveal?.type === 'oral' && (
+          <section className="oral-answer" aria-labelledby="oral-reference-title">
+            <h3 id="oral-reference-title">参考答案</h3>
+            <p>{reveal.referenceAnswer}</p>
+            <h4>回答要点</h4>
+            <ul>
+              {reveal.keyPoints.map((keyPoint) => (
+                <li key={keyPoint}>{keyPoint}</li>
+              ))}
+            </ul>
+            <h4>可能追问</h4>
+            <ul>
+              {reveal.followUps.map((followUp) => (
+                <li key={followUp}>{followUp}</li>
+              ))}
+            </ul>
+            {!attempt ? (
+              <div className="oral-actions" aria-label="口述题自评">
+                <button
+                  className="secondary-button"
+                  onClick={() => void assessOral('needs_review')}
+                >
+                  需要复习
+                </button>
+                <button className="primary-button" onClick={() => void assessOral('understood')}>
+                  已掌握
+                </button>
+              </div>
+            ) : (
+              <p className={`notice ${attempt.correct ? '' : 'oral-review-notice'}`} role="status">
+                {attempt.correct ? '已记录为掌握。' : '已加入待复习队列。'}
+              </p>
+            )}
+          </section>
+        )}
+
+        {(!reveal || attempt) && (
+          <button
+            className="primary-button full-width"
+            disabled={!reveal && question.type !== 'oral' && !response}
+            onClick={reveal ? next : () => void submit()}
+          >
+            {reveal
+              ? index + 1 === questions.length
+                ? '完成练习'
+                : '下一题'
+              : question.type === 'oral'
+                ? '查看参考答案'
+                : '提交答案'}
+          </button>
+        )}
       </article>
     </section>
   );

@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 
-import { questionManifestSchema, type QuestionManifest } from '@agentprep/question-schema';
+import {
+  questionManifestSchema,
+  type Importance,
+  type QuestionManifest,
+  type Subject,
+} from '@agentprep/question-schema';
 import { z } from 'zod';
 
 const legacyQuestionSchema = z.object({
@@ -16,11 +21,14 @@ const legacyQuestionSchema = z.object({
 const legacyFileSchema = z.array(legacyQuestionSchema);
 
 export interface LegacyImportOptions {
+  chapter: string;
   source: string;
   sourceVersion: string;
   license: string;
   manifestId: string;
   generatedAt: string;
+  importance: Importance;
+  subject: Subject;
 }
 
 function resolveAnswer(answer: string | number, options: readonly string[]) {
@@ -50,12 +58,15 @@ export function importLegacyJson(input: unknown, options: LegacyImportOptions): 
     return {
       id,
       version: '1.0.0',
-      type: 'multiple_choice' as const,
+      type: 'single_choice' as const,
       prompt: item.question,
-      topics: item.topics ?? ['imported'],
+      subject: options.subject,
+      chapter: options.chapter,
+      knowledgePoints: item.topics ?? ['imported'],
       difficulty: item.difficulty ?? ('foundation' as const),
+      importance: options.importance,
       choices: item.options.map((text, index) => ({ id: `choice-${index + 1}`, text })),
-      correctChoiceIds: [`choice-${answerIndex + 1}`],
+      correctChoiceId: `choice-${answerIndex + 1}`,
       explanation: item.explanation?.trim() || '待人工补充解析。',
       provenance: {
         kind: 'licensed_external' as const,
@@ -69,9 +80,9 @@ export function importLegacyJson(input: unknown, options: LegacyImportOptions): 
   });
 
   return questionManifestSchema.parse({
-    schemaVersion: 1,
+    schemaVersion: 2,
     manifestId: options.manifestId,
-    contentVersion: '0.1.0-quarantine',
+    contentVersion: '0.2.0-quarantine',
     generatedAt: options.generatedAt,
     questions,
   });
