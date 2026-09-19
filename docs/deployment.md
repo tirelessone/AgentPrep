@@ -20,7 +20,7 @@ pnpm build
 
 ## 可选 Server
 
-Server 需要 Node.js 22+。在部署环境中设置 `OPENAI_API_KEY`、`OPENAI_BASE_URL` 和 `OPENAI_MODEL`，然后运行：
+Server 需要 Node.js 22+。在部署环境中设置 `OPENAI_API_KEY`、`OPENAI_BASE_URL`、`OPENAI_MODEL` 和 Tutor 资源预算，然后运行：
 
 ```bash
 pnpm --filter @agentprep/server build
@@ -28,6 +28,8 @@ pnpm --filter @agentprep/server start
 ```
 
 使用 `GET /health` 作为存活检查。不要把 `.env` 文件打入镜像或静态资源。
+
+默认资源预算为：单次请求体 64 KiB、每个来源 IP 每分钟 20 次 Tutor 请求、单次模型输出最多 800 tokens。可以通过 `TUTOR_BODY_LIMIT_BYTES`、`TUTOR_RATE_LIMIT_MAX`、`TUTOR_RATE_LIMIT_WINDOW_MS` 和 `OPENAI_MAX_OUTPUT_TOKENS` 调整。无效或越界配置会回退到安全默认值；发布时仍应在可信反向代理处配置第二层限流和总成本告警。
 
 ## 同源反向代理
 

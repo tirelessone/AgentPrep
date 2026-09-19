@@ -20,6 +20,8 @@ The repository `https://github.com/lij768423-svg/408-` is listed only as a possi
 | @fastify/forwarded | 3.0.2 | MIT | [link](https://github.com/fastify/forwarded#readme) |
 | @fastify/merge-json-schemas | 0.2.1 | MIT | [link](https://github.com/fastify/merge-json-schemas#readme) |
 | @fastify/proxy-addr | 5.1.1 | MIT | [link](https://github.com/fastify/proxy-addr#readme) |
+| @fastify/rate-limit | 11.2.0 | MIT | [link](https://github.com/fastify/fastify-rate-limit#readme) |
+| @lukeed/ms | 2.0.2 | MIT | [link](https://github.com/lukeed/ms#readme) |
 | @pinojs/redact | 0.4.0 | MIT | [link](https://github.com/pinojs/redact#readme) |
 | @types/trusted-types | 2.0.7 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/trusted-types) |
 | abstract-logging | 2.0.1 | MIT | [link](https://github.com/jsumners/abstract-logging#readme) |
@@ -38,8 +40,10 @@ The repository `https://github.com/lij768423-svg/408-` is listed only as a possi
 | fast-querystring | 1.1.2 | MIT | [link](https://github.com/anonrig/fast-querystring#readme) |
 | fast-uri | 3.1.8, 4.2.0 | BSD-3-Clause | [link](https://github.com/fastify/fast-uri) |
 | fastify | 5.12.5 | MIT | [link](https://fastify.dev/) |
+| fastify-plugin | 6.0.0 | MIT | [link](https://github.com/fastify/fastify-plugin#readme) |
 | fastq | 1.20.3 | ISC | [link](https://github.com/mcollina/fastq#readme) |
 | find-my-way | 9.9.0 | MIT | [link](https://github.com/delvedor/find-my-way#readme) |
+| ip-address | 10.7.2 | MIT | [link](https://github.com/beaugunderson/ip-address#readme) |
 | ipaddr.js | 2.5.0 | MIT | [link](https://github.com/whitequark/ipaddr.js#readme) |
 | json-schema-ref-resolver | 3.0.0 | MIT | [link](https://github.com/fastify/json-schema-ref-resolver#readme) |
 | json-schema-traverse | 1.0.0 | MIT | [link](https://github.com/epoberezkin/json-schema-traverse#readme) |

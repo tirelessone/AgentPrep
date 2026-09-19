@@ -4,6 +4,7 @@ export interface OpenAICompatibleProviderOptions {
   baseUrl: string;
   apiKey: string;
   model: string;
+  maxOutputTokens?: number;
   fetcher?: typeof fetch;
 }
 
@@ -37,6 +38,7 @@ export class OpenAICompatibleProvider implements TutorProvider {
         },
         body: JSON.stringify({
           model: this.options.model,
+          max_tokens: this.options.maxOutputTokens ?? 800,
           stream: true,
           messages: buildTutorMessages(request),
         }),
@@ -95,6 +97,13 @@ export function createProviderFromEnv(environment: NodeJS.ProcessEnv = process.e
   return new OpenAICompatibleProvider({
     apiKey,
     baseUrl: environment.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
+    maxOutputTokens: readMaxOutputTokens(environment.OPENAI_MAX_OUTPUT_TOKENS),
     model: environment.OPENAI_MODEL ?? 'gpt-4.1-mini',
   });
+}
+
+function readMaxOutputTokens(value: string | undefined) {
+  if (!value) return 800;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 64 && parsed <= 4_096 ? parsed : 800;
 }

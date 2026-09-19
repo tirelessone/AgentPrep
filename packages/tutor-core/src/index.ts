@@ -14,12 +14,20 @@ export type TutorMode = z.infer<typeof tutorModeSchema>;
 
 const submittedQuestionContextSchema = z.object({
   submitted: z.literal(true),
-  questionId: z.string().min(1),
-  prompt: z.string().min(1),
-  choices: z.array(z.object({ id: z.string().min(1), text: z.string().min(1) })).min(2),
-  selectedChoiceIds: z.array(z.string().min(1)).min(1),
-  correctChoiceIds: z.array(z.string().min(1)).min(1),
-  explanation: z.string().min(1),
+  questionId: z.string().trim().min(1).max(128),
+  prompt: z.string().trim().min(1).max(2_000),
+  choices: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(64),
+        text: z.string().trim().min(1).max(500),
+      }),
+    )
+    .min(2)
+    .max(8),
+  selectedChoiceIds: z.array(z.string().trim().min(1).max(64)).min(1).max(8),
+  correctChoiceIds: z.array(z.string().trim().min(1).max(64)).min(1).max(8),
+  explanation: z.string().trim().min(1).max(4_000),
 });
 
 export const tutorRequestSchema = z.object({

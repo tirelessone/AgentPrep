@@ -41,6 +41,42 @@ describe('Tutor SSE route', () => {
     expect(response.json()).toMatchObject({ error: 'INVALID_REQUEST' });
   });
 
+  it('rejects oversized request bodies before invoking the provider', async () => {
+    const app = buildApp({
+      provider: new MockTutorProvider(),
+      tutorBodyLimitBytes: 4_096,
+    });
+    apps.push(app);
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/tutor/stream',
+      payload: { mode: 'free_chat', message: 'x'.repeat(5_000) },
+    });
+
+    expect(response.statusCode).toBe(413);
+  });
+
+  it('rate limits repeated Tutor requests from the same client', async () => {
+    const app = buildApp({
+      provider: new MockTutorProvider(['ok']),
+      tutorRateLimitMax: 2,
+      tutorRateLimitWindowMs: 60_000,
+    });
+    apps.push(app);
+    const request = () =>
+      app.inject({
+        method: 'POST',
+        url: '/api/tutor/stream',
+        payload: { mode: 'free_chat', message: 'hello' },
+      });
+
+    expect((await request()).statusCode).toBe(200);
+    expect((await request()).statusCode).toBe(200);
+    const limited = await request();
+    expect(limited.statusCode).toBe(429);
+    expect(limited.headers['retry-after']).toBeDefined();
+  });
+
   it('emits a safe timeout event without exposing provider details', async () => {
     const app = buildApp({
       provider: new MockTutorProvider(['late'], 50),

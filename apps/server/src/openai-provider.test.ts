@@ -24,6 +24,7 @@ describe('OpenAICompatibleProvider', () => {
     const provider = new OpenAICompatibleProvider({
       baseUrl: 'https://provider.example/v1/',
       apiKey: 'server-secret',
+      maxOutputTokens: 321,
       model: 'test-model',
       fetcher,
     });
@@ -40,6 +41,10 @@ describe('OpenAICompatibleProvider', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe('https://provider.example/v1/chat/completions');
     expect(init?.headers).toMatchObject({ authorization: 'Bearer server-secret' });
-    expect(JSON.parse(String(init?.body))).toMatchObject({ model: 'test-model', stream: true });
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      max_tokens: 321,
+      model: 'test-model',
+      stream: true,
+    });
   });
 });

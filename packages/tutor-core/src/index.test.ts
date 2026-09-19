@@ -50,6 +50,27 @@ describe('Tutor contracts', () => {
     expect(output).toEqual(['a', 'b']);
   });
 
+  it('rejects oversized question context before it can reach a provider', () => {
+    const result = tutorRequestSchema.safeParse({
+      mode: 'wrong_reason',
+      message: '我错在哪里？',
+      context: {
+        submitted: true,
+        questionId: 'q1',
+        prompt: 'x'.repeat(2_001),
+        choices: [
+          { id: 'a', text: 'A' },
+          { id: 'b', text: 'B' },
+        ],
+        selectedChoiceIds: ['a'],
+        correctChoiceIds: ['b'],
+        explanation: 'B is correct.',
+      },
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it('stops the mock stream when cancelled', async () => {
     const provider = new MockTutorProvider(['late'], 50);
     const controller = new AbortController();

@@ -2,7 +2,7 @@
 
 AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学习 PWA。目标是在无后端时仍可完成刷题、错题、收藏、复习以及数据导入导出，并为题库来源和内容审核提供可追溯记录。
 
-> 当前状态：Phase 3 release candidate。可离线完成学习闭环；提交答案后可选择连接服务端 AI Tutor；内容与发布门禁已纳入 CI。
+> 当前状态：Phase 4 release candidate。可离线完成学习闭环；提交答案后可选择连接受资源预算保护的服务端 AI Tutor；内容、依赖与发布门禁已纳入 CI。
 
 ## 原创贡献边界
 
@@ -20,7 +20,7 @@ AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学�
 - Fastify TypeScript API
 - Zod Schema
 - Vitest + Testing Library + Playwright
-- 规划中的 SSE AI Tutor 与 OpenAI-compatible provider abstraction
+- SSE AI Tutor 与 OpenAI-compatible provider abstraction
 
 ## 开发
 
@@ -33,7 +33,7 @@ pnpm dev
 
 Web 默认运行在 `http://localhost:5173`，Server 默认运行在 `http://localhost:3000`。
 
-AI Tutor 是可选能力。复制 `apps/server/.env.example` 为本地 `.env` 并仅在 Server 进程设置 `OPENAI_API_KEY`、`OPENAI_BASE_URL` 和 `OPENAI_MODEL`。不要创建任何 `VITE_*` 密钥变量。接口和降级语义见 [AI Tutor 文档](docs/ai-tutor.md)。
+AI Tutor 是可选能力。复制 `apps/server/.env.example` 为本地 `.env` 并仅在 Server 进程设置 provider 凭据和 Tutor 资源预算。不要创建任何 `VITE_*` 密钥变量。接口、限流和降级语义见 [AI Tutor 文档](docs/ai-tutor.md)。
 
 ## 验证
 
@@ -57,7 +57,7 @@ pnpm check
 - `apps/server`：可选 Fastify API；客户端核心学习功能不依赖它
 - `packages/domain`：共享领域类型
 - `packages/question-schema`：题目与来源元数据的 Zod 契约
-- `packages/tutor-core`：AI Tutor 的纯类型边界（Phase 0 不调用模型）
+- `packages/tutor-core`：AI Tutor 的请求校验、提示边界和可测试 provider 契约
 - `tools/importers`：隔离的内容转换器工作区
 - `content/*`：清单、原创内容和隔离区
 - `docs/adr`：架构决策记录

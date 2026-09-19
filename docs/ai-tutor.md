@@ -16,6 +16,8 @@ AI Tutor 是可选在线增强层。Server 未配置或网络中断时，刷题�
 
 `POST /api/tutor/stream` 接受 `mode`、`message` 和可选的已提交题目上下文。当前 Web 只在用户提交选择后展示 Tutor，因此标准答案不会出现在提交前请求中。
 
+Server 在调用 provider 前校验字段长度并限制请求体大小，默认按来源 IP 每分钟最多接受 20 次 Tutor 请求；provider 请求默认最多生成 800 tokens。阈值由 Server-only 环境变量配置，不能使用 `VITE_*` 变量暴露到浏览器。进程内限流是第一层保护，公网部署仍需在可信反向代理配置限流和总成本告警。
+
 响应使用 `text/event-stream`：
 
 - `meta`：请求 ID 和模式
