@@ -1,6 +1,6 @@
 # AgentPrep Roadmap
 
-## Phase 0 — 工程基础（当前）
+## Phase 0 — 工程基础
 
 - [x] 初始化 Git 与 pnpm workspace
 - [x] 建立 Web、Server 和共享包骨架
@@ -12,11 +12,11 @@
 
 ## Phase 1 — Local-first 学习闭环
 
-- 定义稳定的题库 manifest 与版本迁移策略
-- 实现原创小样题库和安全导入/导出
-- 用 Dexie 实现作答、错题、收藏与复习队列
-- 完成选择题提交前答案隔离
-- 覆盖离线刷新、持久化和数据迁移 E2E
+- [x] 定义稳定的题库 manifest 与版本迁移策略
+- [x] 实现原创小样题库和安全导入/导出
+- [x] 用 Dexie 实现作答、错题、收藏与复习队列
+- [x] 完成选择题提交前答案隔离
+- [x] 覆盖离线刷新、持久化和数据迁移 E2E
 
 ## Phase 2 — 可选 AI Tutor
 

@@ -10,10 +10,13 @@
   },
   "dependencies": {
     "@agentprep/domain": "workspace:*",
+    "@agentprep/question-schema": "workspace:*",
     "dexie": "^4.2.0",
+    "dexie-react-hooks": "^4.4.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "workbox-window": "7.4.1"
+    "workbox-window": "7.4.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.2",

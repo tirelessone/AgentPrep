@@ -2,7 +2,7 @@
 
 AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学习 PWA。目标是在无后端时仍可完成刷题、错题、收藏、复习以及数据导入导出，并为题库来源和内容审核提供可追溯记录。
 
-> 当前状态：Phase 0 工程骨架。尚未导入题库、实现刷题流程或接入 AI。
+> 当前状态：Phase 1 本地学习闭环。可离线刷原创小样题库、记录错题、收藏、复习并导入导出学习数据；AI Tutor 尚未接入。
 
 ## 原创贡献边界
 
@@ -60,5 +60,9 @@ pnpm check
 - `content/*`：清单、原创内容和隔离区
 - `docs/adr`：架构决策记录
 - `tests/e2e`：端到端测试
+
+## 本地数据
+
+学习记录保存在浏览器 IndexedDB 的 `agentprep` 数据库中。数据页可导出和恢复 JSON 备份；备份只包含用户学习状态，不包含题库正文、标准答案或密钥。题库随 PWA 静态发布，因此离线可用；“提交前不泄露答案”指答案不会在提交前进入可见 DOM 或 Tutor 请求，而不是把离线静态资源当作秘密保存。
 
 路线图见 [ROADMAP.md](ROADMAP.md)，架构概览见 [docs/architecture.md](docs/architecture.md)。

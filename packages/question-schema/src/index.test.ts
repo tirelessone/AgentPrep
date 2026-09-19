@@ -7,6 +7,8 @@ const question = {
   version: '1.0.0',
   type: 'multiple_choice' as const,
   prompt: 'Which boundary protects a provider API key?',
+  topics: ['security'],
+  difficulty: 'foundation' as const,
   choices: [
     { id: 'a', text: 'Browser bundle' },
     { id: 'b', text: 'Server environment' },
