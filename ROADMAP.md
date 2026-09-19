@@ -47,4 +47,12 @@
 - [x] 升级原创 manifest，并保持现有学习记录兼容
 - [x] 为四类题型补齐校验、作答和渲染测试
 
+## Content Taxonomy + Practice Selection — 专项刷题
+
+- [x] 建立九个学科及 canonical chapter catalog
+- [x] 为学科、章节和难度提供统一中文展示层
+- [x] 在发布门禁校验 subject/chapter 组合
+- [x] 按学科、章节和全部/未做/错题/收藏模式生成练习队列
+- [x] 使用批量 IndexedDB 查询避免逐题 N+1 查询
+
 明确不在第一版范围：账号、云同步、向量数据库、微服务、多智能体。

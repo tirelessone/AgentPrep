@@ -13,7 +13,7 @@
 
 | Manifest | Content version | Questions | SHA-256 |
 | --- | --- | ---: | --- |
-| content/manifests/original-v2.json | 2.0.0 | 8 | `eb5ae0a507666185d3755d304e0d0e9014f752ab0e7c73749078f567b7b33e2e` |
+| content/manifests/original-v2.json | 2.1.0 | 8 | `8c6df561501c658e9c9c93da12db7d6662c3f80330154d9d1549a8f52f826b06` |
 
 ## Question provenance
 

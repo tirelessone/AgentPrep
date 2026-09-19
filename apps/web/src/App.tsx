@@ -7,11 +7,18 @@ import type {
   QuestionReveal,
   StudyAttempt,
 } from '@agentprep/domain';
+import { getChapterLabel, getDifficultyLabel, getSubjectLabel } from '@agentprep/taxonomy';
 
 import { exportStudyData, importStudyData } from './backup';
 import { questionManifest, questionPrompts, revealQuestion } from './content';
 import { db } from './db';
+import { PracticeSelection } from './features/practice/PracticeSelection';
 import { QuestionRenderer } from './features/practice/QuestionRenderer';
+import {
+  getPracticeModeLabel,
+  selectPracticeQuestions,
+  type PracticeSelectionValue,
+} from './features/practice/practice-selection';
 import { InstallButton } from './InstallButton';
 import { TutorPanel } from './TutorPanel';
 import {
@@ -21,11 +28,13 @@ import {
   toggleFavorite,
 } from './study-service';
 
-type View = 'home' | 'practice' | 'wrong' | 'favorites' | 'review' | 'data';
+type View =
+  'home' | 'practice-select' | 'practice-session' | 'wrong' | 'favorites' | 'review' | 'data';
 
 const viewLabels: Record<View, string> = {
   home: '首页',
-  practice: '刷题',
+  'practice-select': '刷题',
+  'practice-session': '专项练习',
   wrong: '错题',
   favorites: '收藏',
   review: '复习',
@@ -59,6 +68,7 @@ function QuestionSession({
   const [response, setResponse] = useState<QuestionResponse>();
   const [reveal, setReveal] = useState<QuestionReveal>();
   const [attempt, setAttempt] = useState<StudyAttempt>();
+  const previousQuestionsRef = useRef(questions);
   const question = questions[index];
   const favoriteIds = useLiveQuery(
     async () => (await db.favorites.toCollection().primaryKeys()).map(String),
@@ -68,6 +78,8 @@ function QuestionSession({
   const isFavorite = question ? favoriteIds.includes(question.id) : false;
 
   useEffect(() => {
+    if (previousQuestionsRef.current === questions) return;
+    previousQuestionsRef.current = questions;
     setIndex(0);
     setResponse(undefined);
     setReveal(undefined);
@@ -146,12 +158,12 @@ function QuestionSession({
 
       <article className="question-card">
         <div className="topic-row">
-          <span>{question.subject}</span>
-          <span>{question.chapter}</span>
+          <span>{getSubjectLabel(question.subject)}</span>
+          <span>{getChapterLabel(question.subject, question.chapter)}</span>
           {question.knowledgePoints.map((knowledgePoint) => (
             <span key={knowledgePoint}>{knowledgePoint}</span>
           ))}
-          <span>{question.difficulty}</span>
+          <span>{getDifficultyLabel(question.difficulty)}</span>
           <span>重要度 {question.importance}</span>
         </div>
         <QuestionRenderer
@@ -187,12 +199,16 @@ function QuestionSession({
                 <li key={keyPoint}>{keyPoint}</li>
               ))}
             </ul>
-            <h4>可能追问</h4>
-            <ul>
-              {reveal.followUps.map((followUp) => (
-                <li key={followUp}>{followUp}</li>
-              ))}
-            </ul>
+            {reveal.followUps.length > 0 && (
+              <>
+                <h4>可能追问</h4>
+                <ul>
+                  {reveal.followUps.map((followUp) => (
+                    <li key={followUp}>{followUp}</li>
+                  ))}
+                </ul>
+              </>
+            )}
             {!attempt ? (
               <div className="oral-actions" aria-label="口述题自评">
                 <button
@@ -334,7 +350,7 @@ function Dashboard({ onNavigate }: { onNavigate: (view: View) => void }) {
           <p className="intro">
             面向 Agent / LLM 岗秋招的可追溯题库。离线刷题，按节奏复习，需要时再请 AI Tutor 帮忙。
           </p>
-          <button className="primary-button" onClick={() => onNavigate('practice')}>
+          <button className="primary-button" onClick={() => onNavigate('practice-select')}>
             开始刷题 <span>→</span>
           </button>
         </div>
@@ -378,6 +394,8 @@ function Dashboard({ onNavigate }: { onNavigate: (view: View) => void }) {
 
 export function App() {
   const [view, setView] = useState<View>('home');
+  const [practiceSelection, setPracticeSelection] = useState<PracticeSelectionValue>();
+  const [practiceQueue, setPracticeQueue] = useState<readonly QuestionPrompt[]>([]);
   const online = useOnlineStatus();
   const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(db), [], []);
   const favoriteIds = useLiveQuery(
@@ -386,8 +404,8 @@ export function App() {
     [] as string[],
   );
   const dueIds = useLiveQuery(() => getDueReviewQuestionIds(db), [], []);
-
   const queue = useMemo(() => {
+    if (view === 'practice-session') return practiceQueue;
     const ids =
       view === 'wrong'
         ? wrongIds
@@ -396,12 +414,25 @@ export function App() {
           : view === 'review'
             ? dueIds
             : [];
-    return view === 'practice'
-      ? questionPrompts
-      : questionPrompts.filter((question) => ids.includes(question.id));
-  }, [dueIds, favoriteIds, view, wrongIds]);
+    return questionPrompts.filter((question) => ids.includes(question.id));
+  }, [dueIds, favoriteIds, practiceQueue, view, wrongIds]);
 
-  const isSession = ['practice', 'wrong', 'favorites', 'review'].includes(view);
+  const isSession = ['practice-session', 'wrong', 'favorites', 'review'].includes(view);
+  const sessionTitle =
+    view === 'practice-session' && practiceSelection
+      ? `${getSubjectLabel(practiceSelection.subject)} · ${
+          practiceSelection.chapter
+            ? getChapterLabel(practiceSelection.subject, practiceSelection.chapter)
+            : '全部章节'
+        } · ${getPracticeModeLabel(practiceSelection.mode)}`
+      : viewLabels[view];
+
+  async function startPractice(selection: PracticeSelectionValue) {
+    const questions = await selectPracticeQuestions(db, questionPrompts, selection);
+    setPracticeSelection(selection);
+    setPracticeQueue(questions);
+    setView('practice-session');
+  }
 
   return (
     <div className="app-shell">
@@ -420,26 +451,43 @@ export function App() {
 
       <main>
         {view === 'home' && <Dashboard onNavigate={setView} />}
-        {isSession && (
-          <QuestionSession
-            questions={queue}
-            title={viewLabels[view]}
-            onExit={() => setView('home')}
+        {view === 'practice-select' && (
+          <PracticeSelection
+            questions={questionPrompts}
+            onBack={() => setView('home')}
+            onStart={(selection) => void startPractice(selection)}
           />
+        )}
+        {isSession && (
+          <QuestionSession questions={queue} title={sessionTitle} onExit={() => setView('home')} />
         )}
         {view === 'data' && <DataCenter />}
       </main>
 
       <nav className="bottom-nav" aria-label="主导航">
-        {(['home', 'practice', 'review', 'data'] as const).map((item) => (
+        {(['home', 'practice-select', 'review', 'data'] as const).map((item) => (
           <button
             key={item}
-            className={view === item ? 'active' : ''}
-            aria-current={view === item ? 'page' : undefined}
+            className={
+              view === item || (item === 'practice-select' && view === 'practice-session')
+                ? 'active'
+                : ''
+            }
+            aria-current={
+              view === item || (item === 'practice-select' && view === 'practice-session')
+                ? 'page'
+                : undefined
+            }
             onClick={() => setView(item)}
           >
             <span aria-hidden="true">
-              {item === 'home' ? '⌂' : item === 'practice' ? '▣' : item === 'review' ? '◷' : '⇅'}
+              {item === 'home'
+                ? '⌂'
+                : item === 'practice-select'
+                  ? '▣'
+                  : item === 'review'
+                    ? '◷'
+                    : '⇅'}
             </span>
             {viewLabels[item]}
           </button>

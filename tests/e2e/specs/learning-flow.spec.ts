@@ -1,9 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+async function startAgentPractice(page: Page) {
+  await page.getByRole('button', { name: /开始刷题/ }).click();
+  await page.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }).click();
+  await page.getByRole('button', { name: /开始专项练习/ }).click();
+}
 
 test('keeps answers hidden until submission and persists wrong answers', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /开始刷题/ }).click();
+  await startAgentPractice(page);
 
   await expect(page.getByRole('button', { name: '提交答案' })).toBeVisible();
   await expect(page.getByText(/模型只能提出结构化工具调用/)).toHaveCount(0);
@@ -108,7 +114,7 @@ test('shows Tutor only after submission and renders SSE output', async ({ page }
   });
 
   await page.goto('/');
-  await page.getByRole('button', { name: /开始刷题/ }).click();
+  await startAgentPractice(page);
   await expect(page.getByRole('heading', { name: 'AI Tutor' })).toHaveCount(0);
   await page.locator('label.choice').filter({ hasText: '受控执行器校验并执行工具调用' }).click();
   await page.getByRole('button', { name: '提交答案' }).click();
@@ -136,6 +142,13 @@ test('publishes install metadata and has no serious accessibility violations', a
   ).toEqual([]);
 
   await page.getByRole('button', { name: /开始刷题/ }).click();
+  const selectionScan = await new AxeBuilder({ page }).analyze();
+  expect(
+    selectionScan.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')),
+  ).toEqual([]);
+
+  await page.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }).click();
+  await page.getByRole('button', { name: /开始专项练习/ }).click();
   const questionScan = await new AxeBuilder({ page }).analyze();
   expect(
     questionScan.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')),

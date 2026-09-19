@@ -1,14 +1,8 @@
-export type QuestionSubject =
-  | 'computer_network'
-  | 'operating_system'
-  | 'data_structure'
-  | 'mysql'
-  | 'llm'
-  | 'agent'
-  | 'machine_learning';
+import type { Difficulty, Importance, Subject } from '@agentprep/question-schema';
 
-export type QuestionDifficulty = 'foundation' | 'intermediate' | 'advanced';
-export type QuestionImportance = 1 | 2 | 3 | 4 | 5;
+export type QuestionSubject = Subject;
+export type QuestionDifficulty = Difficulty;
+export type QuestionImportance = Importance;
 
 export interface LocalSetting {
   key: string;

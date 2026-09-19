@@ -14,12 +14,12 @@ pnpm --filter @agentprep/importers import:legacy -- \
   --source-version COMMIT_SHA \
   --license CC-BY-4.0 \
   --subject agent \
-  --chapter Agent基础 \
+  --chapter runtime \
   --importance 3 \
   --manifest-id candidate-bank
 ```
 
-`--subject` 必须是 Question Schema v2 定义的学科之一，`--importance` 必须为 1–5。旧输入的 `topics` 会转换为 `knowledgePoints`。输出只能进入 `content/quarantine`，默认状态为 `unverified`。命令拒绝 `unknown`、`unlicensed` 等模糊许可证，并拒绝覆盖已有文件。
+`--subject` 必须是 canonical taxonomy 定义的学科之一，`--chapter` 必须使用该学科下的 canonical chapter id，`--importance` 必须为 1–5。旧输入的 `topics` 会转换为 `knowledgePoints`。隔离区允许暂存非 canonical chapter，但人工审核发布时会被拒绝，直到映射完成。输出只能进入 `content/quarantine`，默认状态为 `unverified`。命令拒绝 `unknown`、`unlicensed` 等模糊许可证，并拒绝覆盖已有文件。
 
 ## 2. 人工审核
 

@@ -1,5 +1,5 @@
 {
-  "name": "@agentprep/question-schema",
+  "name": "@agentprep/taxonomy",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,6 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@agentprep/taxonomy": "workspace:*",
-    "zod": "^4.1.5"
+    "zod": "^4.6.5"
   }
 }

@@ -22,7 +22,7 @@ const baseQuestion = {
   version: '2.0.0',
   prompt: 'Which boundary owns side effects?',
   subject: 'agent' as const,
-  chapter: 'agent-runtime',
+  chapter: 'runtime',
   knowledgePoints: ['tool-calling'],
   difficulty: 'foundation' as const,
   importance: 5 as const,
@@ -109,9 +109,10 @@ describe('Question Schema v2', () => {
       type: 'oral',
       referenceAnswer: 'An agent alternates model decisions and controlled tool execution.',
       keyPoints: ['model decision', 'controlled executor'],
-      followUps: ['How do you stop the loop?'],
+      followUps: [],
     });
     expect(question.keyPoints).toHaveLength(2);
+    expect(question.followUps).toEqual([]);
     expect(question).not.toHaveProperty('choices');
     expect(question).not.toHaveProperty('correctChoiceIds');
   });
@@ -133,6 +134,18 @@ describe('Question Schema v2', () => {
       ]),
     );
     expect(result.success).toBe(false);
+  });
+
+  it('rejects a chapter outside the canonical taxonomy from published content', () => {
+    const result = publishedQuestionManifestSchema.safeParse(
+      manifestWith([{ ...singleChoiceQuestion, chapter: 'unknown-chapter' }]),
+    );
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({ path: ['questions', 0, 'chapter'] }),
+      );
+    }
   });
 
   it('does not allow AI-generated content to arrive pre-reviewed', () => {

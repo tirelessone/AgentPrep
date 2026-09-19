@@ -242,6 +242,113 @@ h1 {
   line-height: 1.7;
 }
 
+.practice-selection {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 2rem 0 6rem;
+}
+.selection-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.selection-heading h2 {
+  margin: 0;
+  font-size: clamp(2.2rem, 10vw, 4rem);
+}
+.selection-heading p:not(.overline) {
+  max-width: 38rem;
+  color: #59616e;
+  line-height: 1.7;
+}
+.practice-selection h3 {
+  margin: 1.5rem 0 0.8rem;
+  font-size: 0.9rem;
+}
+.subject-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+.subject-grid button {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid rgb(24 32 51 / 14%);
+  border-radius: 0.9rem;
+  background: rgb(255 255 255 / 58%);
+  color: #182033;
+  text-align: left;
+}
+.subject-grid button.selected {
+  border-color: #2e5b88;
+  background: #eef4f8;
+  box-shadow: inset 0 0 0 1px #2e5b88;
+}
+.subject-grid span {
+  color: #68717d;
+  font-size: 0.75rem;
+}
+.selection-options {
+  margin-top: 1.5rem;
+  padding: 1.2rem;
+  border: 1px solid rgb(24 32 51 / 13%);
+  border-radius: 1.1rem;
+  background: rgb(255 255 255 / 58%);
+}
+.selection-options > label {
+  display: grid;
+  gap: 0.45rem;
+  color: #505c69;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+.selection-options select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid rgb(24 32 51 / 18%);
+  border-radius: 0.7rem;
+  background: #fff;
+  color: #182033;
+  font: inherit;
+}
+.selection-options legend {
+  margin: 1.5rem 0 0.8rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+.mode-grid label {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem;
+  border: 1px solid rgb(24 32 51 / 14%);
+  border-radius: 0.75rem;
+  background: #fbfaf6;
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-align: center;
+}
+.mode-grid label.selected {
+  border-color: #2e5b88;
+  background: #eef4f8;
+  color: #234b70;
+}
+.mode-grid input {
+  position: absolute;
+  opacity: 0;
+}
+
 .session {
   max-width: 48rem;
   margin: 0 auto;
@@ -663,6 +770,9 @@ legend {
   }
   .quick-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .subject-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .source-note {
     grid-template-columns: 0.8fr 1.2fr;

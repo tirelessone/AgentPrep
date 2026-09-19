@@ -15,7 +15,7 @@ const legacy = [
 ];
 
 const importOptions = {
-  chapter: 'agent-runtime',
+  chapter: 'runtime',
   source: 'https://example.test/repository',
   sourceVersion: 'abc123',
   license: 'CC-BY-4.0',
@@ -33,7 +33,7 @@ describe('legacy importer', () => {
       type: 'single_choice',
       correctChoiceId: 'choice-2',
       subject: 'agent',
-      chapter: 'agent-runtime',
+      chapter: 'runtime',
       importance: 4,
       provenance: {
         source: 'https://example.test/repository#q-1',

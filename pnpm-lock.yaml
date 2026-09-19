@@ -84,6 +84,9 @@ importers:
       '@agentprep/question-schema':
         specifier: workspace:*
         version: link:../../packages/question-schema
+      '@agentprep/taxonomy':
+        specifier: workspace:*
+        version: link:../../packages/taxonomy
       '@agentprep/tutor-core':
         specifier: workspace:*
         version: link:../../packages/tutor-core
@@ -116,12 +119,25 @@ importers:
         specifier: ^1.0.3
         version: 1.3.0(supports-color@7.2.0)(vite@7.3.6(@types/node@24.13.5)(terser@5.51.2)(tsx@4.23.13))(workbox-build@7.4.1(@types/babel__core@7.20.5)(supports-color@7.2.0))(workbox-window@7.4.1)
 
-  packages/domain: {}
+  packages/domain:
+    dependencies:
+      '@agentprep/question-schema':
+        specifier: workspace:*
+        version: link:../question-schema
 
   packages/question-schema:
     dependencies:
+      '@agentprep/taxonomy':
+        specifier: workspace:*
+        version: link:../taxonomy
       zod:
         specifier: ^4.1.5
+        version: 4.6.5
+
+  packages/taxonomy:
+    dependencies:
+      zod:
+        specifier: ^4.6.5
         version: 4.6.5
 
   packages/tutor-core:

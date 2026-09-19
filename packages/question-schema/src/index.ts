@@ -1,25 +1,16 @@
 import { z } from 'zod';
 
+import {
+  difficultySchema,
+  importanceSchema,
+  isCanonicalChapter,
+  subjectSchema,
+} from '@agentprep/taxonomy';
+
+export { difficultySchema, importanceSchema, subjectSchema } from '@agentprep/taxonomy';
+export type { Difficulty, Importance, Subject } from '@agentprep/taxonomy';
+
 const nonEmptyStringSchema = z.string().trim().min(1);
-
-export const subjectSchema = z.enum([
-  'computer_network',
-  'operating_system',
-  'data_structure',
-  'mysql',
-  'llm',
-  'agent',
-  'machine_learning',
-]);
-
-export const difficultySchema = z.enum(['foundation', 'intermediate', 'advanced']);
-export const importanceSchema = z.union([
-  z.literal(1),
-  z.literal(2),
-  z.literal(3),
-  z.literal(4),
-  z.literal(5),
-]);
 export const reviewStatusSchema = z.enum(['unverified', 'reviewed', 'rejected']);
 
 export const provenanceSchema = z
@@ -125,7 +116,7 @@ export const oralQuestionSchema = questionBaseSchema.extend({
   type: z.literal('oral'),
   referenceAnswer: nonEmptyStringSchema,
   keyPoints: z.array(nonEmptyStringSchema).min(1).readonly(),
-  followUps: z.array(nonEmptyStringSchema).min(1).readonly(),
+  followUps: z.array(nonEmptyStringSchema).readonly(),
 });
 
 export const questionSchema = z.discriminatedUnion('type', [
@@ -170,13 +161,18 @@ export const publishedQuestionManifestSchema = questionManifestSchema.superRefin
           message: 'Published manifests may contain reviewed questions only.',
         });
       }
+
+      if (!isCanonicalChapter(question.subject, question.chapter)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['questions', index, 'chapter'],
+          message: `Unknown chapter for ${question.subject}: ${question.chapter}`,
+        });
+      }
     });
   },
 );
 
-export type Subject = z.infer<typeof subjectSchema>;
-export type Difficulty = z.infer<typeof difficultySchema>;
-export type Importance = z.infer<typeof importanceSchema>;
 export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
 export type Provenance = z.infer<typeof provenanceSchema>;
 export type QuestionChoice = z.infer<typeof questionChoiceSchema>;

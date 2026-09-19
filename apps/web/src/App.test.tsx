@@ -9,6 +9,13 @@ import { App } from './App';
 import { questionManifest } from './content';
 import { db } from './db';
 
+async function startAgentPractice() {
+  fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
+  fireEvent.click(screen.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }));
+  fireEvent.click(screen.getByRole('button', { name: /开始专项练习/ }));
+  await screen.findByText(/受控执行器校验并执行工具调用/);
+}
+
 afterEach(async () => {
   cleanup();
   await db.attempts.clear();
@@ -20,7 +27,7 @@ afterEach(async () => {
 describe('App', () => {
   it('starts a local practice without revealing the answer before submission', async () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
+    await startAgentPractice();
 
     expect(screen.getByText(/受控执行器校验并执行工具调用/)).toBeInTheDocument();
     expect(screen.queryByText(/模型只能提出结构化工具调用/)).not.toBeInTheDocument();
@@ -51,7 +58,7 @@ describe('App', () => {
     vi.stubGlobal('fetch', fetcher);
 
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
+    await startAgentPractice();
     expect(fetcher).not.toHaveBeenCalled();
     fireEvent.click(screen.getByLabelText(/受控执行器校验并执行工具调用/));
     fireEvent.click(screen.getByRole('button', { name: '提交答案' }));
@@ -61,6 +68,24 @@ describe('App', () => {
     expect(await screen.findByText('保持标准答案不变。')).toBeInTheDocument();
     expect(requestBody).toMatchObject({ context: { submitted: true, correctChoiceIds: ['b'] } });
     expect(firstQuestion.correctChoiceId).toBe(verifiedAnswer);
+  });
+
+  it('uses centralized Chinese taxonomy labels in selection and sessions', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
+
+    expect(screen.getByRole('button', { name: /Agent \/ RAG.*7 道题/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /LLM.*1 道题/ })).toBeInTheDocument();
+    expect(screen.queryByText('computer_network')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }));
+    expect(screen.getByRole('option', { name: '运行时（4 道题）' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /开始专项练习/ }));
+
+    expect((await screen.findAllByText('Agent / RAG')).length).toBeGreaterThan(0);
+    expect(screen.getByText('运行时')).toBeInTheDocument();
+    expect(screen.getByText('基础')).toBeInTheDocument();
+    expect(screen.queryByText('foundation')).not.toBeInTheDocument();
   });
 
   it('offers the browser install prompt when available', async () => {
