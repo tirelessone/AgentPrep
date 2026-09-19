@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: ['icon.svg', 'question-assets/**/*'],
       manifest: {
         name: 'AgentPrep',
         short_name: 'AgentPrep',

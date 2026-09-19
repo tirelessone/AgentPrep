@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" role="img" aria-labelledby="title description">
+  <title id="title">Synthetic network frames</title>
+  <desc id="description">Two labeled network frames travel between a sender and receiver.</desc>
+  <rect width="640" height="240" rx="24" fill="#f4f1e9"/>
+  <rect x="36" y="76" width="132" height="88" rx="16" fill="#182033"/>
+  <rect x="472" y="76" width="132" height="88" rx="16" fill="#182033"/>
+  <path d="M184 104h272M184 136h272" stroke="#96522f" stroke-width="8" stroke-linecap="round"/>
+  <path d="m438 88 22 16-22 16M202 120l-22 16 22 16" fill="none" stroke="#96522f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="102" y="129" fill="#fffdf7" font-family="sans-serif" font-size="22" text-anchor="middle">Sender</text>
+  <text x="538" y="129" fill="#fffdf7" font-family="sans-serif" font-size="22" text-anchor="middle">Receiver</text>
+</svg>

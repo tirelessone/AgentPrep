@@ -27,6 +27,7 @@ function promptMetadata(question: Question) {
     knowledgePoints: question.knowledgePoints,
     difficulty: question.difficulty,
     importance: question.importance,
+    ...(question.media !== undefined ? { media: question.media } : {}),
   };
 }
 

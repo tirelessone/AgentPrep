@@ -13,6 +13,22 @@ export type { Difficulty, Importance, Subject } from '@agentprep/taxonomy';
 const nonEmptyStringSchema = z.string().trim().min(1);
 export const reviewStatusSchema = z.enum(['unverified', 'reviewed', 'rejected']);
 
+const questionAssetPathSchema = nonEmptyStringSchema.refine(
+  (src) => {
+    if (!/^\/question-assets\/[a-z0-9][a-z0-9-]*\/[^?#\\]+$/.test(src)) return false;
+    return !src.split('/').some((segment) => segment === '.' || segment === '..');
+  },
+  {
+    message: 'Question images must use a stable /question-assets/<source>/<file> path.',
+  },
+);
+
+export const questionMediaSchema = z.object({
+  type: z.literal('image'),
+  src: questionAssetPathSchema,
+  alt: nonEmptyStringSchema,
+});
+
 export const provenanceSchema = z
   .object({
     kind: z.enum(['original', 'licensed_external', 'ai_generated']),
@@ -46,6 +62,7 @@ const questionBaseSchema = z.object({
   knowledgePoints: z.array(nonEmptyStringSchema).min(1),
   difficulty: difficultySchema,
   importance: importanceSchema,
+  media: z.array(questionMediaSchema).readonly().optional(),
   provenance: provenanceSchema,
 });
 
@@ -176,6 +193,7 @@ export const publishedQuestionManifestSchema = questionManifestSchema.superRefin
 export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
 export type Provenance = z.infer<typeof provenanceSchema>;
 export type QuestionChoice = z.infer<typeof questionChoiceSchema>;
+export type QuestionMedia = z.infer<typeof questionMediaSchema>;
 export type SingleChoiceQuestion = z.infer<typeof singleChoiceQuestionSchema>;
 export type MultipleChoiceQuestion = z.infer<typeof multipleChoiceQuestionSchema>;
 export type TrueFalseQuestion = z.infer<typeof trueFalseQuestionSchema>;

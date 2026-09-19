@@ -4,6 +4,8 @@ import type {
   QuestionResponse,
 } from '@agentprep/domain';
 
+import { QuestionMedia } from './QuestionMedia';
+
 export function MultipleChoiceQuestion({
   disabled,
   question,
@@ -22,6 +24,7 @@ export function MultipleChoiceQuestion({
   return (
     <fieldset disabled={disabled}>
       <legend>{question.prompt}</legend>
+      <QuestionMedia media={question.media} />
       <p className="question-hint">多选题 · 可选择多个答案</p>
       <div className="choices">
         {question.choices.map((choice, choiceIndex) => {

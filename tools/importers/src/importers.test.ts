@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { importLegacyJson } from './legacy-json';
+import { imageMediaFromSource } from './media';
 import { buildProvenanceReport } from './report';
 import { approveManifest } from './review';
+import { questionSchema } from '@agentprep/question-schema';
 
 const legacy = [
   {
@@ -23,6 +25,20 @@ const importOptions = {
   generatedAt: '2026-09-19T10:00:00.000Z',
   importance: 4 as const,
   subject: 'agent' as const,
+};
+
+const syntheticImageFixture = {
+  question: {
+    id: 'q-image',
+    question: 'Which frame is transmitted first?',
+    options: ['Frame A', 'Frame B'],
+    answer: 'A',
+  },
+  image: {
+    source: 'synthetic',
+    sourceImagePath: 'fixtures\\images\\network-frames.svg',
+    alt: 'Two network frames crossing a link',
+  },
 };
 
 describe('legacy importer', () => {
@@ -49,6 +65,35 @@ describe('legacy importer', () => {
     expect(() => importLegacyJson(legacy, { ...importOptions, license: 'unknown' })).toThrow(
       'concrete redistribution license',
     );
+  });
+
+  it('normalizes a synthetic source image into Question.media without changing legacy input', () => {
+    const manifest = importLegacyJson([syntheticImageFixture.question], importOptions);
+    const media = imageMediaFromSource(syntheticImageFixture.image);
+    const question = questionSchema.parse({ ...manifest.questions[0], media: [media] });
+
+    expect(question.media).toEqual([
+      {
+        type: 'image',
+        src: '/question-assets/synthetic/network-frames.svg',
+        alt: 'Two network frames crossing a link',
+      },
+    ]);
+  });
+
+  it('rejects absolute or traversing source image paths', () => {
+    expect(() =>
+      imageMediaFromSource({
+        ...syntheticImageFixture.image,
+        sourceImagePath: 'C:\\images\\network-frames.svg',
+      }),
+    ).toThrow('relative path');
+    expect(() =>
+      imageMediaFromSource({
+        ...syntheticImageFixture.image,
+        sourceImagePath: '../network-frames.svg',
+      }),
+    ).toThrow('traversal');
   });
 });
 

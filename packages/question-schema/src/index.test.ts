@@ -4,6 +4,7 @@ import {
   multipleChoiceQuestionSchema,
   oralQuestionSchema,
   publishedQuestionManifestSchema,
+  questionMediaSchema,
   singleChoiceQuestionSchema,
   trueFalseQuestionSchema,
 } from './index';
@@ -52,6 +53,12 @@ const multipleChoiceQuestion = {
   explanation: 'Both layers contribute.',
 };
 
+const imageMedia = {
+  type: 'image' as const,
+  src: '/question-assets/synthetic/network-frames.svg',
+  alt: 'Two network frames crossing a link',
+};
+
 function manifestWith(questions: unknown[]) {
   return {
     schemaVersion: 2,
@@ -63,6 +70,40 @@ function manifestWith(questions: unknown[]) {
 }
 
 describe('Question Schema v2', () => {
+  it('accepts questions without media or with an empty media list', () => {
+    expect(singleChoiceQuestionSchema.parse(singleChoiceQuestion).media).toBeUndefined();
+    expect(singleChoiceQuestionSchema.parse({ ...singleChoiceQuestion, media: [] }).media).toEqual(
+      [],
+    );
+  });
+
+  it('accepts one or multiple image media items', () => {
+    expect(
+      singleChoiceQuestionSchema.parse({ ...singleChoiceQuestion, media: [imageMedia] }).media,
+    ).toEqual([imageMedia]);
+    expect(
+      singleChoiceQuestionSchema.parse({
+        ...singleChoiceQuestion,
+        media: [
+          imageMedia,
+          {
+            ...imageMedia,
+            src: '/question-assets/synthetic/network-queue.svg',
+            alt: 'Packets waiting in a queue',
+          },
+        ],
+      }).media,
+    ).toHaveLength(2);
+  });
+
+  it('rejects empty media fields and non-site asset paths', () => {
+    expect(questionMediaSchema.safeParse({ ...imageMedia, alt: ' ' }).success).toBe(false);
+    expect(questionMediaSchema.safeParse({ ...imageMedia, src: '' }).success).toBe(false);
+    expect(
+      questionMediaSchema.safeParse({ ...imageMedia, src: 'C:\\images\\frame.png' }).success,
+    ).toBe(false);
+  });
+
   it('validates exactly one known answer for a single-choice question', () => {
     expect(singleChoiceQuestionSchema.parse(singleChoiceQuestion).correctChoiceId).toBe('b');
     expect(
@@ -122,6 +163,13 @@ describe('Question Schema v2', () => {
       manifestWith([singleChoiceQuestion, { ...singleChoiceQuestion }]),
     );
     expect(result.success).toBe(false);
+  });
+
+  it('validates a published manifest containing prompt media', () => {
+    const result = publishedQuestionManifestSchema.safeParse(
+      manifestWith([{ ...singleChoiceQuestion, media: [imageMedia] }]),
+    );
+    expect(result.success).toBe(true);
   });
 
   it('rejects unreviewed content from a published manifest', () => {

@@ -42,6 +42,58 @@ describe('QuestionRenderer', () => {
     expect(onChange).toHaveBeenLastCalledWith({ type: 'single_choice', selectedChoiceId: 'b' });
   });
 
+  it('renders multiple responsive prompt images with their alt text before choices', () => {
+    renderQuestion({
+      ...metadata,
+      type: 'single_choice',
+      prompt: '图片题示例',
+      media: [
+        {
+          type: 'image',
+          src: '/question-assets/synthetic/network-frames.svg',
+          alt: '两个网络帧',
+        },
+        {
+          type: 'image',
+          src: '/question-assets/synthetic/network-queue.svg',
+          alt: '分组等待队列',
+        },
+      ],
+      choices: [
+        { id: 'a', text: '选项 A' },
+        { id: 'b', text: '选项 B' },
+      ],
+    });
+
+    const firstImage = screen.getByRole('img', { name: '两个网络帧' });
+    expect(screen.getByRole('img', { name: '分组等待队列' })).toBeInTheDocument();
+    expect(firstImage.parentElement?.nextElementSibling).toHaveClass('choices');
+  });
+
+  it('keeps the session usable when an image fails to load', () => {
+    const onChange = renderQuestion({
+      ...metadata,
+      type: 'single_choice',
+      prompt: '损坏图片示例',
+      media: [
+        {
+          type: 'image',
+          src: '/question-assets/synthetic/missing.svg',
+          alt: '无法加载的拓扑图',
+        },
+      ],
+      choices: [
+        { id: 'a', text: '仍可选择 A' },
+        { id: 'b', text: '仍可选择 B' },
+      ],
+    });
+
+    fireEvent.error(screen.getByRole('img', { name: '无法加载的拓扑图' }));
+    expect(screen.getByRole('status')).toHaveTextContent('图片暂时无法加载');
+    fireEvent.click(screen.getByLabelText('仍可选择 B'));
+    expect(onChange).toHaveBeenLastCalledWith({ type: 'single_choice', selectedChoiceId: 'b' });
+  });
+
   it('renders a multiple choice question with independently selectable checkboxes', () => {
     const onChange = renderQuestion({
       ...metadata,

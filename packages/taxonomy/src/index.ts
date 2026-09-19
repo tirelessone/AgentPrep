@@ -52,10 +52,11 @@ export const subjectCatalog = [
 
 export const chapterCatalog = [
   { id: 'network_architecture', subject: 'computer_network', label: '网络体系结构', order: 10 },
-  { id: 'application_layer', subject: 'computer_network', label: '应用层', order: 20 },
-  { id: 'transport_layer', subject: 'computer_network', label: '传输层', order: 30 },
+  { id: 'physical_layer', subject: 'computer_network', label: '物理层', order: 20 },
+  { id: 'data_link_layer', subject: 'computer_network', label: '数据链路层', order: 30 },
   { id: 'network_layer', subject: 'computer_network', label: '网络层', order: 40 },
-  { id: 'data_link_layer', subject: 'computer_network', label: '数据链路层', order: 50 },
+  { id: 'transport_layer', subject: 'computer_network', label: '传输层', order: 50 },
+  { id: 'application_layer', subject: 'computer_network', label: '应用层', order: 60 },
 
   { id: 'os_basics', subject: 'operating_system', label: '操作系统基础', order: 10 },
   { id: 'process_thread', subject: 'operating_system', label: '进程与线程', order: 20 },

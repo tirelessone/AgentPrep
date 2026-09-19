@@ -1,4 +1,6 @@
-import type { Difficulty, Importance, Subject } from '@agentprep/question-schema';
+import type { Difficulty, Importance, QuestionMedia, Subject } from '@agentprep/question-schema';
+
+export type { QuestionMedia } from '@agentprep/question-schema';
 
 export type QuestionSubject = Subject;
 export type QuestionDifficulty = Difficulty;
@@ -24,6 +26,7 @@ interface QuestionPromptBase {
   knowledgePoints: readonly string[];
   difficulty: QuestionDifficulty;
   importance: QuestionImportance;
+  media?: readonly QuestionMedia[];
 }
 
 export interface SingleChoiceQuestionPrompt extends QuestionPromptBase {

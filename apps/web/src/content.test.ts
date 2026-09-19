@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { questionManifest, questionPrompts, revealQuestion } from './content';
+import { questionManifest, questionPrompts, revealQuestion, toQuestionPrompt } from './content';
 
 describe('published content', () => {
   it('loads a reviewed original v2 manifest with every supported question type', () => {
@@ -25,6 +25,18 @@ describe('published content', () => {
       expect(prompt).not.toHaveProperty('keyPoints');
       expect(prompt).not.toHaveProperty('followUps');
     });
+  });
+
+  it('preserves media in the Question to QuestionPrompt projection', () => {
+    const source = questionManifest.questions[0]!;
+    const media = [
+      {
+        type: 'image' as const,
+        src: '/question-assets/synthetic/network-frames.svg',
+        alt: 'Two network frames crossing a link',
+      },
+    ];
+    expect(toQuestionPrompt({ ...source, media })).toMatchObject({ media });
   });
 
   it('reveals answers only through the type-specific reveal projection', () => {

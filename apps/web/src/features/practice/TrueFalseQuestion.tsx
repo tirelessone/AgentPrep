@@ -4,6 +4,8 @@ import type {
   TrueFalseQuestionReveal,
 } from '@agentprep/domain';
 
+import { QuestionMedia } from './QuestionMedia';
+
 const answers = [
   { value: true, label: '正确' },
   { value: false, label: '错误' },
@@ -25,6 +27,7 @@ export function TrueFalseQuestion({
   return (
     <fieldset disabled={disabled}>
       <legend>{question.prompt}</legend>
+      <QuestionMedia media={question.media} />
       <p className="question-hint">判断题</p>
       <div className="choices true-false-choices">
         {answers.map((option) => {

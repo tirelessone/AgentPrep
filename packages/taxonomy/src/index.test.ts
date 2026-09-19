@@ -26,10 +26,22 @@ describe('canonical taxonomy', () => {
 
   it('maps chapters by subject even when chapter ids repeat', () => {
     expect(getChapterLabel('computer_network', 'transport_layer')).toBe('传输层');
+    expect(getChapterLabel('computer_network', 'physical_layer')).toBe('物理层');
     expect(getChapterLabel('mysql', 'optimization')).toBe('性能优化');
     expect(getChapterLabel('sql', 'optimization')).toBe('查询优化');
     expect(getChapters('agent')).toHaveLength(14);
     expect(isCanonicalChapter('llm', 'rag')).toBe(false);
+  });
+
+  it('keeps computer network chapters in canonical stack order', () => {
+    expect(getChapters('computer_network').map(({ id }) => id)).toEqual([
+      'network_architecture',
+      'physical_layer',
+      'data_link_layer',
+      'network_layer',
+      'transport_layer',
+      'application_layer',
+    ]);
   });
 
   it('provides centralized difficulty labels', () => {

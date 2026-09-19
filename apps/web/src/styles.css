@@ -427,6 +427,29 @@ legend {
     500 clamp(1.35rem, 6vw, 2rem)/1.45 Georgia,
     serif;
 }
+.question-media {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+}
+.question-media-image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  border-radius: 0.75rem;
+}
+.question-media-fallback {
+  margin: 0;
+  padding: 0.8rem;
+  border: 1px dashed rgb(24 32 51 / 24%);
+  border-radius: 0.7rem;
+  background: #f4f1e9;
+  color: #626b78;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
 .question-hint {
   margin: -0.8rem 0 1rem;
   color: #6a7280;

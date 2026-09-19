@@ -4,6 +4,8 @@ import type {
   SingleChoiceQuestionReveal,
 } from '@agentprep/domain';
 
+import { QuestionMedia } from './QuestionMedia';
+
 export function SingleChoiceQuestion({
   disabled,
   question,
@@ -20,6 +22,7 @@ export function SingleChoiceQuestion({
   return (
     <fieldset disabled={disabled}>
       <legend>{question.prompt}</legend>
+      <QuestionMedia media={question.media} />
       <div className="choices">
         {question.choices.map((choice, choiceIndex) => {
           const checked = response?.selectedChoiceId === choice.id;
