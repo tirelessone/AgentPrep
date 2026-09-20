@@ -58,7 +58,9 @@ describe('published content', () => {
       });
     });
     const content = await loadQuestionContent(fetcher);
-    expect(fetcher.mock.calls.map(([input]) => input)).toEqual([...publishedManifestUrls]);
+    expect(fetcher.mock.calls.map(([input]) => new URL(String(input)).pathname)).toEqual([
+      ...publishedManifestUrls,
+    ]);
     expect(content.questionPrompts).toHaveLength(9);
   });
 

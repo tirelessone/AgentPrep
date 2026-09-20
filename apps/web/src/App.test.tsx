@@ -121,6 +121,24 @@ describe('App', () => {
     await waitFor(() => expect(prompt).toHaveBeenCalledOnce());
   });
 
+  it('hides PWA installation and keeps Tutor disabled in the desktop runtime', async () => {
+    render(<App content={originalContent} platform="desktop" />);
+    const event = new Event('beforeinstallprompt', { cancelable: true });
+    Object.assign(event, {
+      prompt: vi.fn(async () => undefined),
+      userChoice: Promise.resolve({ outcome: 'accepted', platform: 'web' }),
+    });
+    window.dispatchEvent(event);
+    expect(screen.queryByRole('button', { name: '安装应用' })).not.toBeInTheDocument();
+
+    await startAgentPractice();
+    fireEvent.click(screen.getByLabelText(/受控执行器校验并执行工具调用/));
+    fireEvent.click(screen.getByRole('button', { name: '提交答案' }));
+
+    expect(await screen.findByText('AI Tutor 尚未在桌面版启用。')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'AI Tutor' })).not.toBeInTheDocument();
+  });
+
   it('keeps an empty filtered session on the selection page with a clear message', async () => {
     render(<App content={originalContent} />);
     fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
