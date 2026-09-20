@@ -2,6 +2,14 @@ import Dexie, { type EntityTable } from 'dexie';
 
 import type { FavoriteQuestion, LocalSetting, ReviewItem, StudyAttempt } from '@agentprep/domain';
 
+export const GUEST_DATABASE_NAME = 'agentprep';
+
+export function getUserDatabaseName(userId: string) {
+  const normalized = userId.trim();
+  if (!normalized) throw new Error('A user id is required for an account database.');
+  return `agentprep-user-${normalized}`;
+}
+
 export class AgentPrepDatabase extends Dexie {
   settings!: EntityTable<LocalSetting, 'key'>;
   attempts!: EntityTable<StudyAttempt, 'id'>;
@@ -43,4 +51,8 @@ export class AgentPrepDatabase extends Dexie {
   }
 }
 
-export const db = new AgentPrepDatabase();
+export function createAgentPrepDatabase(name = GUEST_DATABASE_NAME) {
+  return new AgentPrepDatabase(name);
+}
+
+export const db = createAgentPrepDatabase();

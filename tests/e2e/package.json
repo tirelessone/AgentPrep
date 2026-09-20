@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:e2e": "playwright test"
+    "test:e2e": "pnpm --filter @agentprep/web build:e2e && playwright test"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

@@ -4,9 +4,9 @@
 
 ## Content sources
 
-The published sample question bank is original AgentPrep content under CC BY 4.0. No third-party question bank content is currently published.
+AgentPrep publishes original sample content under CC BY 4.0 and a separately attributed Computer Network dataset transformed from a pinned external source.
 
-The repository `https://github.com/lij768423-svg/408-` is listed only as a possible feature reference and importer input. No application code or content from it is included. Any future use requires license verification, quarantine conversion, human review, and provenance recording.
+The Computer Network dataset is transformed by a dedicated importer from `https://github.com/lij768423-svg/408-` commit `267d0d815b1eee770dad12e88bbd560d08ba3f66`. AgentPrep does not copy the upstream application code and preserves source, transform, review, and license metadata for imported items.
 
 牛客、ky408、CodeBrick 等没有明确再分发授权的内容不得进入本仓库。
 
@@ -23,6 +23,13 @@ The repository `https://github.com/lij768423-svg/408-` is listed only as a possi
 | @fastify/rate-limit | 11.2.0 | MIT | [link](https://github.com/fastify/fastify-rate-limit#readme) |
 | @lukeed/ms | 2.0.2 | MIT | [link](https://github.com/lukeed/ms#readme) |
 | @pinojs/redact | 0.4.0 | MIT | [link](https://github.com/pinojs/redact#readme) |
+| @supabase/auth-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/auth-js) |
+| @supabase/functions-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/functions-js) |
+| @supabase/phoenix | 0.4.5 | MIT | [link](https://github.com/supabase/phoenix#readme) |
+| @supabase/postgrest-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/postgrest-js) |
+| @supabase/realtime-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/realtime-js) |
+| @supabase/storage-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/storage-js) |
+| @supabase/supabase-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/supabase-js) |
 | @types/trusted-types | 2.0.7 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/trusted-types) |
 | abstract-logging | 2.0.1 | MIT | [link](https://github.com/jsumners/abstract-logging#readme) |
 | ajv | 8.20.0 | MIT | [link](https://ajv.js.org) |
@@ -43,6 +50,7 @@ The repository `https://github.com/lij768423-svg/408-` is listed only as a possi
 | fastify-plugin | 6.0.0 | MIT | [link](https://github.com/fastify/fastify-plugin#readme) |
 | fastq | 1.20.3 | ISC | [link](https://github.com/mcollina/fastq#readme) |
 | find-my-way | 9.9.0 | MIT | [link](https://github.com/delvedor/find-my-way#readme) |
+| iceberg-js | 0.8.1 | MIT | [link](https://github.com/supabase/iceberg-js#readme) |
 | ip-address | 10.7.2 | MIT | [link](https://github.com/beaugunderson/ip-address#readme) |
 | ipaddr.js | 2.5.0 | MIT | [link](https://github.com/whitequark/ipaddr.js#readme) |
 | json-schema-ref-resolver | 3.0.0 | MIT | [link](https://github.com/fastify/json-schema-ref-resolver#readme) |
@@ -71,6 +79,7 @@ The repository `https://github.com/lij768423-svg/408-` is listed only as a possi
 | split2 | 4.2.0 | ISC | [link](https://github.com/mcollina/split2#readme) |
 | thread-stream | 4.2.0 | MIT | [link](https://github.com/mcollina/thread-stream#readme) |
 | toad-cache | 3.7.4 | MIT | [link](https://github.com/kibertoad/toad-cache) |
+| tslib | 2.8.1 | 0BSD | [link](https://www.typescriptlang.org/) |
 | workbox-core | 7.4.1 | MIT | [link](https://github.com/GoogleChrome/workbox) |
 | workbox-window | 7.4.1 | MIT | [link](https://github.com/GoogleChrome/workbox) |
 | zod | 4.6.5 | MIT | [link](https://zod.dev) |

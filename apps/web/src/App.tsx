@@ -9,9 +9,12 @@ import type {
 } from '@agentprep/domain';
 import { getChapterLabel, getDifficultyLabel, getSubjectLabel } from '@agentprep/taxonomy';
 
+import { AccountCenter, GuestMigrationActions } from './AccountCenter';
+import { AccountProvider, getSyncStatusLabel, useAccount } from './AccountContext';
 import { exportStudyData, importStudyData } from './backup';
+import type { CloudRuntime } from './cloud/runtime';
 import { loadQuestionContent, type QuestionContent } from './content';
-import { db } from './db';
+import type { AgentPrepDatabase } from './db';
 import { PracticeSelection } from './features/practice/PracticeSelection';
 import { QuestionRenderer } from './features/practice/QuestionRenderer';
 import {
@@ -29,7 +32,14 @@ import {
 } from './study-service';
 
 type View =
-  'home' | 'practice-select' | 'practice-session' | 'wrong' | 'favorites' | 'review' | 'data';
+  | 'home'
+  | 'practice-select'
+  | 'practice-session'
+  | 'wrong'
+  | 'favorites'
+  | 'review'
+  | 'data'
+  | 'account';
 
 const viewLabels: Record<View, string> = {
   home: '首页',
@@ -39,6 +49,7 @@ const viewLabels: Record<View, string> = {
   favorites: '收藏',
   review: '复习',
   data: '数据',
+  account: '账号',
 };
 
 function useOnlineStatus() {
@@ -56,11 +67,15 @@ function useOnlineStatus() {
 }
 
 function QuestionSession({
+  database,
+  onLocalMutation,
   questions,
   title,
   revealQuestion,
   onExit,
 }: {
+  database: AgentPrepDatabase;
+  onLocalMutation: () => void;
   questions: readonly QuestionPrompt[];
   title: string;
   revealQuestion: QuestionContent['revealQuestion'];
@@ -74,10 +89,10 @@ function QuestionSession({
   const question = questions[index];
   const favoriteIds = useLiveQuery(
     async () =>
-      (await db.favorites.filter((favorite) => favorite.isFavorite).toArray()).map(
+      (await database.favorites.filter((favorite) => favorite.isFavorite).toArray()).map(
         (favorite) => favorite.questionId,
       ),
-    [],
+    [database],
     [] as string[],
   );
   const isFavorite = question ? favoriteIds.includes(question.id) : false;
@@ -112,19 +127,21 @@ function QuestionSession({
       return;
     }
     if (!response) return;
-    const nextAttempt = await recordAttempt(db, question!, nextReveal, response);
+    const nextAttempt = await recordAttempt(database, question!, nextReveal, response);
     setReveal(nextReveal);
     setAttempt(nextAttempt);
+    onLocalMutation();
   }
 
   async function assessOral(selfAssessment: 'understood' | 'needs_review') {
     if (!question || question.type !== 'oral' || !reveal || reveal.type !== 'oral' || attempt)
       return;
-    const nextAttempt = await recordAttempt(db, question, reveal, {
+    const nextAttempt = await recordAttempt(database, question, reveal, {
       type: 'oral',
       selfAssessment,
     });
     setAttempt(nextAttempt);
+    onLocalMutation();
   }
 
   function next() {
@@ -151,7 +168,9 @@ function QuestionSession({
           className={`icon-button ${isFavorite ? 'active' : ''}`}
           aria-label={isFavorite ? '取消收藏' : '收藏题目'}
           aria-pressed={isFavorite}
-          onClick={() => void toggleFavorite(db, question.id)}
+          onClick={() => {
+            void toggleFavorite(database, question.id).then(onLocalMutation);
+          }}
         >
           {isFavorite ? '★' : '☆'}
         </button>
@@ -186,10 +205,10 @@ function QuestionSession({
               <p>{reveal.explanation}</p>
             </div>
             {question.type === 'single_choice' && reveal.type === 'single_choice' && (
-              <TutorPanel prompt={question} reveal={reveal} attempt={attempt} />
+              <TutorAvailability prompt={question} reveal={reveal} attempt={attempt} />
             )}
             {question.type === 'multiple_choice' && reveal.type === 'multiple_choice' && (
-              <TutorPanel prompt={question} reveal={reveal} attempt={attempt} />
+              <TutorAvailability prompt={question} reveal={reveal} attempt={attempt} />
             )}
           </>
         )}
@@ -254,21 +273,45 @@ function QuestionSession({
   );
 }
 
-function DataCenter({ contentVersion }: { contentVersion: string }) {
+function TutorAvailability({
+  prompt,
+  reveal,
+  attempt,
+}: {
+  prompt: Extract<QuestionPrompt, { type: 'single_choice' | 'multiple_choice' }>;
+  reveal: Extract<QuestionReveal, { type: 'single_choice' | 'multiple_choice' }>;
+  attempt: StudyAttempt;
+}) {
+  if (import.meta.env.DEV || import.meta.env.MODE === 'e2e') {
+    return <TutorPanel prompt={prompt} reveal={reveal} attempt={attempt} />;
+  }
+  return <p className="notice">AI Tutor 尚未在此部署环境启用。</p>;
+}
+
+function DataCenter({
+  contentVersion,
+  database,
+  onLocalMutation,
+}: {
+  contentVersion: string;
+  database: AgentPrepDatabase;
+  onLocalMutation: () => void;
+}) {
+  const account = useAccount();
   const inputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState('');
   const counts = useLiveQuery(
     async () => ({
-      attempts: await db.attempts.count(),
-      favorites: await db.favorites.filter((favorite) => favorite.isFavorite).count(),
-      reviews: await db.reviews.count(),
+      attempts: await database.attempts.count(),
+      favorites: await database.favorites.filter((favorite) => favorite.isFavorite).count(),
+      reviews: await database.reviews.count(),
     }),
-    [],
+    [database],
     { attempts: 0, favorites: 0, reviews: 0 },
   );
 
   async function downloadBackup() {
-    const data = await exportStudyData(db);
+    const data = await exportStudyData(database);
     const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -280,7 +323,8 @@ function DataCenter({ contentVersion }: { contentVersion: string }) {
 
   async function restore(file: File) {
     try {
-      await importStudyData(db, await file.text());
+      await importStudyData(database, await file.text());
+      onLocalMutation();
       setMessage('导入完成，当前设备的数据已恢复。');
     } catch (error) {
       setMessage(error instanceof Error ? `导入失败：${error.message}` : '导入失败。');
@@ -289,8 +333,13 @@ function DataCenter({ contentVersion }: { contentVersion: string }) {
 
   return (
     <section className="data-center" aria-labelledby="data-title">
-      <p className="overline">LOCAL DATA</p>
-      <h2 id="data-title">你的记录，只在你的设备</h2>
+      <p className="overline">LOCAL-FIRST DATA</p>
+      <h2 id="data-title">学习数据</h2>
+      <p>
+        {account.user
+          ? '学习记录优先保存在当前设备，并同步到你的 AgentPrep 账号。'
+          : '学习记录保存在当前设备。登录后可选择跨设备同步。'}
+      </p>
       <p>备份文件只包含作答、收藏、复习计划和设置，不包含题库答案或任何 API Key。</p>
       <div className="data-summary">
         <div>
@@ -326,6 +375,32 @@ function DataCenter({ contentVersion }: { contentVersion: string }) {
           }}
         />
       </div>
+      <section className="cloud-summary" aria-labelledby="cloud-summary-title">
+        <h3 id="cloud-summary-title">Cloud Sync</h3>
+        <p>
+          <strong>账号：</strong> {account.user?.email ?? '未登录'}
+        </p>
+        <p>
+          <strong>同步状态：</strong>{' '}
+          {getSyncStatusLabel(account.syncStatus, Boolean(account.user))}
+        </p>
+        <p>
+          <strong>最后同步：</strong>{' '}
+          {account.lastSuccessfulSyncAt
+            ? new Date(account.lastSuccessfulSyncAt).toLocaleString('zh-CN')
+            : '尚未完成'}
+        </p>
+        {account.user && (
+          <button className="secondary-button" onClick={() => void account.syncNow()}>
+            立即同步
+          </button>
+        )}
+        {account.syncWarnings.length > 0 && (
+          <p className="notice" role="status">
+            检测到 {account.syncWarnings.length} 条作答 ID 冲突，已保留云端记录。
+          </p>
+        )}
+      </section>
       {message && (
         <p className="notice" role="status">
           {message}
@@ -337,20 +412,22 @@ function DataCenter({ contentVersion }: { contentVersion: string }) {
 }
 
 function Dashboard({
+  database,
   questionCount,
   onNavigate,
 }: {
+  database: AgentPrepDatabase;
   questionCount: number;
   onNavigate: (view: View) => void;
 }) {
-  const attemptCount = useLiveQuery(() => db.attempts.count(), [], 0);
+  const attemptCount = useLiveQuery(() => database.attempts.count(), [database], 0);
   const favoriteCount = useLiveQuery(
-    () => db.favorites.filter((favorite) => favorite.isFavorite).count(),
-    [],
+    () => database.favorites.filter((favorite) => favorite.isFavorite).count(),
+    [database],
     0,
   );
-  const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(db), [], []);
-  const dueIds = useLiveQuery(() => getDueReviewQuestionIds(db), [], []);
+  const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(database), [database], []);
+  const dueIds = useLiveQuery(() => getDueReviewQuestionIds(database), [database], []);
 
   return (
     <>
@@ -408,21 +485,23 @@ function Dashboard({
 }
 
 function LoadedApp({ content }: { content: QuestionContent }) {
+  const account = useAccount();
+  const database = account.database;
   const { manifest: questionManifest, questionPrompts, revealQuestion } = content;
   const [view, setView] = useState<View>('home');
   const [practiceSelection, setPracticeSelection] = useState<PracticeSelectionValue>();
   const [practiceQueue, setPracticeQueue] = useState<readonly QuestionPrompt[]>([]);
   const online = useOnlineStatus();
-  const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(db), [], []);
+  const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(database), [database], []);
   const favoriteIds = useLiveQuery(
     async () =>
-      (await db.favorites.filter((favorite) => favorite.isFavorite).toArray()).map(
+      (await database.favorites.filter((favorite) => favorite.isFavorite).toArray()).map(
         (favorite) => favorite.questionId,
       ),
-    [],
+    [database],
     [] as string[],
   );
-  const dueIds = useLiveQuery(() => getDueReviewQuestionIds(db), [], []);
+  const dueIds = useLiveQuery(() => getDueReviewQuestionIds(database), [database], []);
   const queue = useMemo(() => {
     if (view === 'practice-session') return practiceQueue;
     const ids =
@@ -447,7 +526,7 @@ function LoadedApp({ content }: { content: QuestionContent }) {
       : viewLabels[view];
 
   async function startPractice(selection: PracticeSelectionValue) {
-    const questions = await selectPracticeQuestions(db, questionPrompts, selection);
+    const questions = await selectPracticeQuestions(database, questionPrompts, selection);
     if (questions.length === 0) return false;
     setPracticeSelection(selection);
     setPracticeQueue(questions);
@@ -463,16 +542,28 @@ function LoadedApp({ content }: { content: QuestionContent }) {
         </button>
         <div className="topbar-actions">
           <InstallButton />
-          <span className={`network ${online ? '' : 'offline'}`} role="status">
+          <button className="account-entry" onClick={() => setView('account')}>
+            {account.user?.email ?? (account.authAvailable ? '登录 / 注册' : '仅本机')}
+          </button>
+          <span
+            className={`network ${!online || account.syncStatus === 'error' ? 'offline' : ''}`}
+            role="status"
+          >
             <i aria-hidden="true" />
-            {online ? '本地数据已就绪' : '离线模式'}
+            {online ? getSyncStatusLabel(account.syncStatus, Boolean(account.user)) : '离线模式'}
           </span>
         </div>
       </header>
 
+      {account.guestMigrationPending && view !== 'account' && <GuestMigrationActions />}
+
       <main>
         {view === 'home' && (
-          <Dashboard questionCount={questionManifest.questions.length} onNavigate={setView} />
+          <Dashboard
+            database={database}
+            questionCount={questionManifest.questions.length}
+            onNavigate={setView}
+          />
         )}
         {view === 'practice-select' && (
           <PracticeSelection
@@ -483,13 +574,22 @@ function LoadedApp({ content }: { content: QuestionContent }) {
         )}
         {isSession && (
           <QuestionSession
+            database={database}
+            onLocalMutation={account.notifyLocalMutation}
             questions={queue}
             title={sessionTitle}
             revealQuestion={revealQuestion}
             onExit={() => setView('home')}
           />
         )}
-        {view === 'data' && <DataCenter contentVersion={questionManifest.contentVersion} />}
+        {view === 'data' && (
+          <DataCenter
+            database={database}
+            contentVersion={questionManifest.contentVersion}
+            onLocalMutation={account.notifyLocalMutation}
+          />
+        )}
+        {view === 'account' && <AccountCenter />}
       </main>
 
       <nav className="bottom-nav" aria-label="主导航">
@@ -525,7 +625,11 @@ function LoadedApp({ content }: { content: QuestionContent }) {
   );
 }
 
-export function App({ content: suppliedContent }: { content?: QuestionContent | undefined }) {
+function QuestionContentApp({
+  content: suppliedContent,
+}: {
+  content?: QuestionContent | undefined;
+}) {
   const [content, setContent] = useState<QuestionContent | undefined>(suppliedContent);
   const [loadError, setLoadError] = useState('');
 
@@ -571,4 +675,20 @@ export function App({ content: suppliedContent }: { content?: QuestionContent | 
   }
 
   return <LoadedApp content={content} />;
+}
+
+export function App({
+  content,
+  database,
+  runtime,
+}: {
+  content?: QuestionContent | undefined;
+  database?: AgentPrepDatabase | undefined;
+  runtime?: CloudRuntime | undefined;
+}) {
+  return (
+    <AccountProvider database={database} runtime={runtime}>
+      <QuestionContentApp content={content} />
+    </AccountProvider>
+  );
 }

@@ -7,8 +7,16 @@ import './styles.css';
 
 registerSW({ immediate: true });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
+async function bootstrap() {
+  const runtime =
+    import.meta.env.MODE === 'e2e'
+      ? (await import('./cloud/e2e-runtime')).createE2eCloudRuntime()
+      : undefined;
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App runtime={runtime} />
+    </React.StrictMode>,
+  );
+}
+
+void bootstrap();

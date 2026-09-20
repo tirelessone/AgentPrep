@@ -79,12 +79,16 @@ const supportedBackupSchema = z.discriminatedUnion('schemaVersion', [
 
 const MAX_BACKUP_BYTES = 2 * 1024 * 1024;
 
+function isPortableSetting(key: string) {
+  return !key.startsWith('device:');
+}
+
 export async function exportStudyData(database: AgentPrepDatabase, now = new Date()) {
   const [attempts, favorites, reviews, settings] = await Promise.all([
     database.attempts.toArray(),
     database.favorites.toArray(),
     database.reviews.toArray(),
-    database.settings.toArray(),
+    database.settings.filter((setting) => isPortableSetting(setting.key)).toArray(),
   ]);
 
   return JSON.stringify(
@@ -139,7 +143,9 @@ export async function importStudyData(database: AgentPrepDatabase, text: string)
       await database.attempts.bulkPut(backup.data.attempts);
       await database.favorites.bulkPut(backup.data.favorites);
       await database.reviews.bulkPut(backup.data.reviews);
-      await database.settings.bulkPut(backup.data.settings);
+      await database.settings.bulkPut(
+        backup.data.settings.filter((setting) => isPortableSetting(setting.key)),
+      );
     },
   );
 

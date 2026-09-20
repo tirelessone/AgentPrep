@@ -85,8 +85,22 @@ input:focus-visible + .choice-key {
 }
 .topbar-actions {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 0.7rem;
+}
+.account-entry {
+  max-width: 9rem;
+  overflow: hidden;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgb(24 32 51 / 20%);
+  border-radius: 0.55rem;
+  background: rgb(255 255 255 / 45%);
+  color: #182033;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .install-button {
   padding: 0.45rem 0.65rem;
@@ -656,7 +670,8 @@ legend {
 }
 
 .empty-state,
-.data-center {
+.data-center,
+.account-center {
   max-width: 44rem;
   margin: 0 auto;
   padding: 10vh 0 6rem;
@@ -674,14 +689,98 @@ legend {
   font-size: 1.7rem;
 }
 .empty-state h2,
-.data-center h2 {
+.data-center h2,
+.account-center h2 {
   margin: 0;
   font-size: clamp(2rem, 9vw, 3.5rem);
 }
 .empty-state p,
-.data-center > p {
+.data-center > p,
+.account-center > p {
   color: #5d6571;
   line-height: 1.7;
+}
+
+.account-details,
+.cloud-summary,
+.migration-card {
+  margin: 2rem 0;
+  padding: 1rem;
+  border: 1px solid rgb(24 32 51 / 13%);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 55%);
+  text-align: left;
+}
+.account-details p,
+.cloud-summary p {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 0.75rem;
+  margin: 0.6rem 0;
+}
+.account-details span,
+.cloud-summary span {
+  overflow-wrap: anywhere;
+}
+.cloud-summary h3,
+.migration-card h3 {
+  margin-top: 0;
+}
+.cloud-summary .secondary-button {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin: 2rem 0 1rem;
+  padding: 0.35rem;
+  border-radius: 0.8rem;
+  background: rgb(24 32 51 / 8%);
+}
+.auth-tabs button {
+  min-height: 2.8rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: #59616e;
+  font-weight: 800;
+}
+.auth-tabs button.selected {
+  background: #fff;
+  color: #182033;
+  box-shadow: 0 0.25rem 0.8rem rgb(24 32 51 / 9%);
+}
+.auth-form {
+  display: grid;
+  gap: 0.9rem;
+  text-align: left;
+}
+.auth-form label {
+  display: grid;
+  gap: 0.4rem;
+  color: #505c69;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+.auth-form input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem;
+  border: 1px solid rgb(24 32 51 / 18%);
+  border-radius: 0.7rem;
+  background: #fff;
+  color: #182033;
+}
+.migration-card {
+  width: min(calc(100% - 2rem), 44rem);
+  margin: 1rem auto;
+  box-shadow: 0 1rem 2.5rem rgb(24 32 51 / 12%);
+}
+.migration-card p {
+  color: #59616e;
+  line-height: 1.6;
 }
 
 .data-summary {
@@ -817,6 +916,30 @@ legend {
     position: static;
     width: min(28rem, calc(100% - 2rem));
     margin: 0 auto;
+  }
+}
+
+@media (max-width: 36rem) {
+  .topbar {
+    height: auto;
+    min-height: 4.5rem;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    padding: 0.7rem 0;
+  }
+  .topbar-actions {
+    gap: 0.4rem;
+  }
+  .account-entry {
+    max-width: 6.8rem;
+  }
+  .network {
+    font-size: 0.65rem;
+  }
+  .account-details p,
+  .cloud-summary p {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
   }
 }
 

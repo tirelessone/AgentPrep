@@ -100,10 +100,16 @@ describe('local study services', () => {
       selectedChoiceId: 'b',
     });
     await toggleFavorite(database, prompt.id);
+    await database.settings.put({
+      key: 'device:lastSuccessfulSyncAt',
+      value: '2026-09-19T08:30:00.000Z',
+      updatedAt: '2026-09-19T08:30:00.000Z',
+    });
 
     const exported = await exportStudyData(database, new Date('2026-09-19T09:00:00.000Z'));
     expect(exported).not.toContain('correctChoiceIds');
     expect(exported).not.toContain('explanation');
+    expect(exported).not.toContain('lastSuccessfulSyncAt');
 
     const restored = new AgentPrepDatabase(`agentprep-restore-${crypto.randomUUID()}`);
     try {

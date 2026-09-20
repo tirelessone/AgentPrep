@@ -3,12 +3,14 @@
 import 'fake-indexeddb/auto';
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import originalManifest from '../../../content/manifests/original-v2.json';
 
 import { App } from './App';
 import { createQuestionContent } from './content';
+import { createFakeCloudRuntime, FakeAuthAdapter } from './cloud/testing';
 import { db } from './db';
 
 const originalContent = createQuestionContent(originalManifest);
@@ -26,8 +28,18 @@ afterEach(async () => {
   await db.attempts.clear();
   await db.favorites.clear();
   await db.reviews.clear();
+  await db.settings.clear();
+  await Promise.all(
+    ['alice@example.com', 'bob@example.com'].map(async (email) => {
+      const auth = testUsers.get(email);
+      if (auth) await Dexie.delete(`agentprep-user-${auth.id}`);
+    }),
+  );
+  testUsers.clear();
   vi.unstubAllGlobals();
 });
+
+const testUsers = new Map<string, { id: string }>();
 
 describe('App', () => {
   it('starts a local practice without revealing the answer before submission', async () => {
@@ -118,5 +130,48 @@ describe('App', () => {
 
     expect(await screen.findByText('当前范围没有符合条件的题目。')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '选择专项练习' })).toBeInTheDocument();
+  });
+
+  it('supports fake login without requiring Supabase secrets', async () => {
+    const auth = new FakeAuthAdapter();
+    const user = auth.seedUser('alice@example.com');
+    testUsers.set(user.email, user);
+    render(<App content={originalContent} runtime={createFakeCloudRuntime(auth)} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '登录 / 注册' }));
+    fireEvent.change(screen.getByLabelText('邮箱'), { target: { value: user.email } });
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: '登录' }));
+
+    await waitFor(() => expect(screen.getAllByText(user.email).length).toBeGreaterThan(0));
+    expect((await screen.findAllByText('已同步')).length).toBeGreaterThan(0);
+  });
+
+  it('asks before merging guest data into the authenticated account', async () => {
+    const prompt = originalContent.questionPrompts[0]!;
+    await db.attempts.add({
+      id: crypto.randomUUID(),
+      questionId: prompt.id,
+      questionVersion: prompt.version,
+      attemptedAt: '2026-09-20T08:00:00.000Z',
+      selectedChoiceIds: ['a'],
+      response: { type: 'single_choice', selectedChoiceId: 'a' },
+      correct: false,
+    });
+    const auth = new FakeAuthAdapter();
+    const user = auth.seedUser('alice@example.com');
+    testUsers.set(user.email, user);
+    const stores = new Map();
+    render(<App content={originalContent} runtime={createFakeCloudRuntime(auth, stores)} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: '登录 / 注册' }));
+    fireEvent.change(screen.getByLabelText('邮箱'), { target: { value: user.email } });
+    fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'password123' } });
+    fireEvent.click(screen.getByRole('button', { name: '登录' }));
+
+    expect(await screen.findByText('检测到本机学习记录')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '合并到我的账号' }));
+    await waitFor(() => expect(stores.get(user.id)?.attempts.size).toBe(1));
+    await expect(db.attempts.count()).resolves.toBe(1);
   });
 });

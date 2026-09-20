@@ -16,6 +16,23 @@ async function chooseNetworkPractice(page: Page, order: '随机' | '顺序') {
   await page.getByRole('button', { name: /开始专项练习/ }).click();
 }
 
+async function register(page: Page, email: string) {
+  await page.getByRole('button', { name: '登录 / 注册' }).click();
+  await page.getByRole('tab', { name: '注册' }).click();
+  await page.getByLabel('邮箱').fill(email);
+  await page.getByLabel('密码', { exact: true }).fill('password123');
+  await page.getByLabel('确认密码').fill('password123');
+  await page.locator('.auth-form').getByRole('button', { name: '注册' }).click();
+  await expect(page.getByRole('heading', { name: '账号与同步' })).toBeVisible();
+}
+
+async function login(page: Page, email: string) {
+  await page.getByLabel('邮箱').fill(email);
+  await page.getByLabel('密码', { exact: true }).fill('password123');
+  await page.locator('.auth-form').getByRole('button', { name: '登录' }).click();
+  await expect(page.getByRole('heading', { name: '账号与同步' })).toBeVisible();
+}
+
 test('keeps answers hidden until submission and persists wrong answers', async ({ page }) => {
   await page.goto('/');
   await startAgentPractice(page);
@@ -52,6 +69,85 @@ test('loads the installed shell while offline', async ({ page, context }) => {
   } finally {
     await context.setOffline(false);
   }
+});
+
+test('syncs confirmed guest data, offline mutations, and isolates a second account', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.evaluate(async () => navigator.serviceWorker.ready);
+
+  await startAgentPractice(page);
+  await page.getByRole('button', { name: '收藏题目' }).click();
+  await page.locator('label.choice').first().click();
+  await page.getByRole('button', { name: '提交答案' }).click();
+  await page.getByRole('button', { name: '返回 AgentPrep 首页' }).click();
+
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await register(page, 'alice@example.com');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await expect(page.getByText('检测到本机学习记录')).toBeVisible();
+  await page.getByRole('button', { name: '合并到我的账号' }).click();
+  await expect(page.getByText('已同步').last()).toBeVisible();
+
+  await context.setOffline(true);
+  await page.getByRole('button', { name: '返回 AgentPrep 首页' }).click();
+  await startAgentPractice(page);
+  await page.locator('label.choice').first().click();
+  await page.getByRole('button', { name: '提交答案' }).click();
+  await page.getByRole('button', { name: '下一题' }).click();
+  await page.getByRole('button', { name: '收藏题目' }).click();
+  await page.locator('label.choice').first().click();
+  await page.getByRole('button', { name: '提交答案' }).click();
+  await page.reload();
+  await expect(page.getByText('离线模式').last()).toBeVisible();
+  await expect(page.getByRole('button', { name: /我的收藏 2 道已收藏/ })).toBeVisible();
+
+  await context.setOffline(false);
+  await expect(page.getByText('已同步').last()).toBeVisible();
+
+  const aliceId = await page.evaluate(() => {
+    const session = localStorage.getItem('agentprep-e2e-session');
+    return (JSON.parse(session!) as { id: string }).id;
+  });
+  await page.goto('/icon.svg');
+  await page.evaluate(async (databaseName) => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase(databaseName);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error('Account database deletion was blocked.'));
+    });
+  }, `agentprep-user-${aliceId}`);
+  await page.goto('/');
+  await expect(page.getByText('已同步').last()).toBeVisible();
+  await expect(page.locator('.hero-metric')).toHaveAttribute('aria-label', '累计完成 3 次作答');
+  await expect(page.getByRole('button', { name: /我的收藏 2 道已收藏/ })).toBeVisible();
+
+  await page.getByRole('button', { name: 'alice@example.com' }).click();
+  await page.getByRole('button', { name: '退出登录' }).click();
+  await page.getByRole('tab', { name: '注册' }).click();
+  await page.getByLabel('邮箱').fill('bob@example.com');
+  await page.getByLabel('密码', { exact: true }).fill('password123');
+  await page.getByLabel('确认密码').fill('password123');
+  await page.locator('.auth-form').getByRole('button', { name: '注册' }).click();
+  await expect(page.getByText('检测到本机学习记录')).toBeVisible();
+  await page.getByRole('button', { name: '暂不合并' }).click();
+  await page.getByRole('button', { name: '返回 AgentPrep 首页' }).click();
+  await expect(page.locator('.hero-metric')).toHaveAttribute('aria-label', '累计完成 0 次作答');
+
+  await page.getByRole('button', { name: 'bob@example.com' }).click();
+  await page.getByRole('button', { name: '退出登录' }).click();
+  await login(page, 'alice@example.com');
+  await page.getByRole('button', { name: '返回 AgentPrep 首页' }).click();
+  await expect(page.locator('.hero-metric')).toHaveAttribute('aria-label', '累计完成 3 次作答');
 });
 
 test('completes a fixed 20-question random network session on a 390px mobile viewport', async ({
@@ -183,8 +279,8 @@ test('migrates a version 1 database without losing settings', async ({ page }) =
     });
   });
 
-  // Dexie maps its logical version 2 to native IndexedDB version 20.
-  expect(migrated).toEqual({ version: 20, value: 'light' });
+  // Dexie maps its logical version 3 to native IndexedDB version 30.
+  expect(migrated).toEqual({ version: 30, value: 'light' });
 });
 
 test('shows Tutor only after submission and renders SSE output', async ({ page }) => {
@@ -222,7 +318,17 @@ test('publishes install metadata and has no serious accessibility violations', a
   await expect(manifest.json()).resolves.toMatchObject({
     name: 'AgentPrep',
     display: 'standalone',
+    icons: expect.arrayContaining([
+      expect.objectContaining({ src: 'icon-192.png', sizes: '192x192' }),
+      expect.objectContaining({ src: 'icon-512.png', sizes: '512x512' }),
+    ]),
   });
+  expect((await page.request.get('/icon-192.png')).ok()).toBe(true);
+  expect((await page.request.get('/icon-512.png')).ok()).toBe(true);
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    'href',
+    '/apple-touch-icon.png',
+  );
   await page.evaluate(async () => navigator.serviceWorker.ready);
 
   const homeScan = await new AxeBuilder({ page }).analyze();
