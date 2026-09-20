@@ -4,9 +4,9 @@
 
 AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学习 PWA。它把刷题、错题、收藏、间隔复习和学习数据备份放在浏览器本地完成，并把可选的 AI Tutor 隔离在服务端，避免核心学习流程依赖网络或模型服务。
 
-项目同时提供题库来源治理能力：每道题都必须记录来源、版本、许可证、转换方式和审核状态；外部内容先进入隔离区，只有通过人工审核与 schema 校验后才能进入发布 manifest。
+项目同时提供可追溯的内容转换能力：每道外部题目保留来源、版本、仓库许可证、转换方式和审核状态，并在进入产品前通过专用 importer 与 schema 校验。
 
-> 当前状态：Phase 0–4、Question Domain v2 与 Content Taxonomy + Practice Selection 已完成，属于可演示、可继续迭代的 release candidate。核心离线学习闭环、四类面试题、专项刷题、可选 AI Tutor、内容治理和 CI 均已实现；账号、云同步、向量数据库、微服务和多智能体不在第一版范围。
+> 当前状态：核心离线学习闭环、Question Domain v2、专项刷题、可选 AI Tutor、真实计算机网络题库、内容溯源和 CI 均已实现；账号、云同步、向量数据库、微服务和多智能体不在第一版范围。
 
 ## 项目是否开发完成？
 
@@ -14,7 +14,7 @@ AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学�
 
 - 核心功能可直接使用：刷题、错题、收藏、到期复习、离线刷新、PWA 安装、学习数据导入导出。
 - AI Tutor 已实现，但属于可选在线增强；只有配置兼容 provider 后才会调用真实模型。
-- 仓库只包含经过治理的原创小样题库，不以抓取或复制未明确授权题库来扩充数量。
+- 仓库内置 AgentPrep 原创 Agent / LLM 示例内容，以及通过独立 importer 标准化的 408 Computer Network 题集。
 - 尚未提供账号、跨设备同步、运营后台和公共托管服务。
 
 ## 核心能力
@@ -23,6 +23,8 @@ AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学�
 - **四类正式题型**：单选题、多选题、判断题和口述题分别建模；多选使用复选框，口述题通过参考答案与要点自评。
 - **结构化知识分类**：题目记录学科、章节、知识点、难度和 1–5 重要度，便于后续做可追溯的内容扩充。
 - **专项练习选择**：按有题目的学科、canonical 章节和全部/未做/错题/收藏模式生成稳定练习队列。
+- **真实网络题库**：内置约 500 道计算机网络单选题，覆盖网络体系结构、物理层、数据链路层、网络层、传输层和应用层。
+- **可控 Session**：支持 20 题、50 题或全部题目，并可选择随机或顺序练习；队列进入 Session 后保持固定。
 - **提交前答案隔离**：选择题提交前不在可见 DOM 或 Tutor 请求中暴露标准答案。
 - **间隔复习**：根据作答结果生成复习计划，并在首页展示到期任务。
 - **安全备份**：导出和恢复作答、收藏、复习计划与设置；备份不包含 API Key。
@@ -39,7 +41,7 @@ AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学�
                            │
                            └─ 提交答案后 ─> Fastify SSE ─> OpenAI-compatible provider
 
-外部内容 ─> 独立 importer ─> quarantine ─> 人工审核 ─> 发布 manifest
+外部内容 ─> 独立 importer ─> 校验与报告 ─> 发布 manifest
 ```
 
 题库、学习状态、UI 和模型适配器保持解耦。浏览器不保存 provider API Key，模型输出也不能回写或修改标准答案。详细设计见 [架构文档](docs/architecture.md) 和 [ADR](docs/adr)。
@@ -117,7 +119,7 @@ OPENAI_MODEL=gpt-4.1-mini
 
 ## 如何使用
 
-1. 在首页点击“开始刷题”，选择有题目的学科、全部或具体章节，以及全部题目、未做题、错题或收藏模式。
+1. 在首页点击“开始刷题”，选择有题目的学科、全部或具体章节，以及全部题目、未做题、错题或收藏模式；再选择 20/50/全部题量与随机/顺序。
 2. 进入专项 Session 后，单选题选择一个答案，多选题可勾选多个答案，判断题选择正确或错误；提交前不会显示标准答案和解析。
 3. 遇到口述题时先独立作答，再查看参考答案、回答要点和可选追问，最后选择“已掌握”或“需要复习”。
 4. 使用题目右上角按钮收藏题目；提交后查看结果、解析和下一题。
@@ -177,6 +179,7 @@ packages/taxonomy        学科、章节及中文展示的 canonical catalog
 packages/tutor-core      Tutor 请求校验、提示边界和 provider 契约
 tools/importers          外部内容转换、隔离、审核与报告工具
 content/manifests        可发布的版本化题库 manifest
+content/external         专用 importer 生成的可追溯外部题库、报告与来源说明
 content/original         原创题目内容
 content/quarantine       未审核或许可证待确认内容，只隔离不发布
 docs/adr                 架构决策记录
@@ -185,7 +188,9 @@ tests/e2e                Playwright 移动端端到端测试
 
 ## 内容与原创贡献边界
 
-应用架构、领域模型、交互、测试、文档和转换工具由 AgentPrep 独立实现，不 fork 或复制现有 408 应用代码。外部仓库只能作为功能调研对象，或在许可证允许时作为独立 importer 的输入。
+应用架构、领域模型、交互、测试、文档和转换工具由 AgentPrep 独立实现，不 fork 或复制现有 408 应用代码。
+
+仓库内的 408 Computer Network 题集由专用 importer 转换自 [lij768423-svg/408-](https://github.com/lij768423-svg/408-) 的固定提交 `267d0d815b1eee770dad12e88bbd560d08ba3f66`。AgentPrep 保留原始题目 ID、来源版本与转换记录，不将该题集表述为 AgentPrep 自有内容。具体范围和跳过项见 [SOURCE.md](content/external/408/SOURCE.md) 与 [import-report.json](content/external/408/import-report.json)。
 
 未经明确授权的牛客、ky408、CodeBrick 等内容不得进入发布题库。AI 生成题必须标记为 `ai_generated`，初始审核状态只能是 `unverified`，不能自动标记为已验证。
 

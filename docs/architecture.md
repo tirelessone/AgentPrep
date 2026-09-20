@@ -2,14 +2,16 @@
 
 ## 运行边界
 
-AgentPrep 以 Web PWA 为主应用。题库快照、学习记录和复习状态保存在浏览器 IndexedDB 中；断网或 Server 不可用时，核心学习闭环仍应工作。
+AgentPrep 以 Web PWA 为主应用。版本化题库 manifest 与题图作为静态资源发布并由 Service Worker 预缓存；学习记录和复习状态保存在浏览器 IndexedDB 中。断网或 Server 不可用时，核心学习闭环仍应工作。
 
 ```text
-taxonomy catalog -> question-schema -> content manifest -> Web PWA -> IndexedDB (Dexie)
-                                                        |
-                                                        +-- optional HTTPS/SSE --> Fastify API
-                                                                                 |
-                                                                                 +--> model provider
+taxonomy catalog -> question-schema -> static content manifests -> Web PWA
+                                                              |          |
+                                                              |          +--> IndexedDB (Dexie)
+                                                              |
+                                                              +-- optional HTTPS/SSE --> Fastify API
+                                                                                       |
+                                                                                       +--> model provider
 ```
 
 Server 是可选增强层，只负责不能安全放进浏览器的能力，例如持有模型凭据和代理流式模型调用。浏览器包不得包含模型 API Key。
@@ -25,14 +27,14 @@ Server 是可选增强层，只负责不能安全放进浏览器的能力，例�
 
 ## 关键数据流
 
-1. 内容先进入 `content/original` 或由 importer 输出到 `content/quarantine`。
-2. 题目通过 schema 校验和人工审核后，才可进入发布 manifest；Web 只加载 `reviewed` 内容。
+1. 原创内容进入 `content/manifests`；固定外部来源通过专用 importer 生成 `content/external` manifest、报告和静态题图。
+2. 每个发布 manifest 先独立通过 schema 校验，再按固定顺序合并；重复题目 ID 直接失败，不允许后加载覆盖。
 3. 发布门禁使用 taxonomy 校验 subject/chapter 组合；knowledgePoints 仍是开放字符串列表。
 4. Web 将作答、收藏和复习状态独立写入 IndexedDB v2；内容升级不覆盖学习记录。
-5. 专项练习先在内存中按 subject/chapter 缩小题目范围，再针对学习模式执行至多一次 IndexedDB 批量查询并固定本次 Session 队列。
+5. 专项练习先在内存中按 subject/chapter 缩小题目范围，再针对学习模式执行至多一次 IndexedDB 批量查询；之后按随机或顺序排列、截取题量并固定本次 Session 队列。
 6. 导入操作先完成大小限制、JSON 解析和 Zod 校验，再在单一事务中替换学习数据。
 7. Tutor 请求只能在用户提交选择后构造；标准答案由领域层保持只读，模型响应不能回写答案字段。
 
 Tutor 调用经过 `tutor-core` 请求校验后，由 Fastify SSE 路由转交 OpenAI-compatible provider。服务端统一施加上下文字段与请求体预算、单 IP 限流、输出 token 上限、20 秒超时、断连取消与安全错误事件；浏览器只把 `token` 事件追加到临时 UI 状态，不写入题库。
 
-离线 PWA 必须把题库正文和答案一起作为静态资源发布，因此答案不被视为客户端秘密。产品保证的是提交前不在界面 DOM 或 Tutor 请求中暴露答案。
+题库 JSON 不进入主 JavaScript bundle。Vite 在开发和构建时从正式内容目录提供静态 manifest，Workbox 将 manifest 与题图加入预缓存。答案不被视为客户端秘密；产品保证的是提交前不在界面 DOM 或 Tutor 请求中暴露答案。
