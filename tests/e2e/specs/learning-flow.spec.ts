@@ -33,6 +33,13 @@ async function login(page: Page, email: string) {
   await expect(page.getByRole('heading', { name: '账号与同步' })).toBeVisible();
 }
 
+async function activatePracticeAction(page: Page, name: string) {
+  const button = page.getByRole('button', { name, exact: true });
+  await expect(button).toBeVisible();
+  await expect(button).toBeEnabled();
+  await button.press('Enter');
+}
+
 test('keeps answers hidden until submission and persists wrong answers', async ({ page }) => {
   await page.goto('/');
   await startAgentPractice(page);
@@ -179,13 +186,16 @@ test('completes a fixed 20-question random network session on a 390px mobile vie
     if (chapter) chapters.add(chapter);
     if (index === 0) await page.getByRole('button', { name: '收藏题目' }).click();
     await page.locator('label.choice input').first().check({ force: true });
-    await page.getByRole('button', { name: '提交答案' }).click();
+    await activatePracticeAction(page, '提交答案');
     await expect(page.locator('.answer-panel')).toBeVisible();
     await expect(page.locator('.answer-panel p')).not.toBeEmpty();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
-    await page.getByRole('button', { name: index === 19 ? '完成练习' : '下一题' }).click();
+    await activatePracticeAction(page, index === 19 ? '完成练习' : '下一题');
+    if (index < 19) {
+      await expect(page.getByRole('heading', { name: `${index + 2} / 20` })).toBeVisible();
+    }
   }
 
   expect(chapters.size).toBeGreaterThan(1);
@@ -226,9 +236,12 @@ test('loads two real prompt images without blocking sequential practice', async 
       loadedImages += 1;
     }
     await page.locator('label.choice input').first().check({ force: true });
-    await page.getByRole('button', { name: '提交答案' }).click();
+    await activatePracticeAction(page, '提交答案');
     await expect(page.locator('.answer-panel')).toBeVisible();
-    if (index < 9) await page.getByRole('button', { name: '下一题' }).click();
+    if (index < 9) {
+      await activatePracticeAction(page, '下一题');
+      await expect(page.getByRole('heading', { name: `${index + 2} / 20` })).toBeVisible();
+    }
   }
   expect(loadedImages).toBeGreaterThanOrEqual(2);
 });
