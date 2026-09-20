@@ -109,7 +109,9 @@ export async function selectPracticeQuestions(
       );
     } else {
       selectedIds = new Set(
-        (await database.favorites.where('questionId').anyOf(scopedIds).primaryKeys()).map(String),
+        (await database.favorites.where('questionId').anyOf(scopedIds).toArray())
+          .filter((favorite) => favorite.isFavorite)
+          .map((favorite) => favorite.questionId),
       );
     }
     modeQuestions = scopedQuestions.filter((question) => selectedIds.has(question.id));

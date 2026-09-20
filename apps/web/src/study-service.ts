@@ -10,6 +10,34 @@ import type { AgentPrepDatabase } from './db';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+export function rebuildReviewsFromAttempts(attempts: readonly StudyAttempt[]) {
+  const reviews = new Map<string, ReviewItem>();
+  const orderedAttempts = [...attempts].sort(
+    (left, right) =>
+      left.questionId.localeCompare(right.questionId) ||
+      left.attemptedAt.localeCompare(right.attemptedAt) ||
+      left.id.localeCompare(right.id),
+  );
+
+  orderedAttempts.forEach((attempt) => {
+    const currentReview = reviews.get(attempt.questionId);
+    const nextInterval = attempt.correct
+      ? Math.max(1, (currentReview?.intervalDays ?? 0) * 2 || 1)
+      : 0;
+    reviews.set(attempt.questionId, {
+      questionId: attempt.questionId,
+      dueAt: new Date(
+        new Date(attempt.attemptedAt).getTime() + nextInterval * DAY_MS,
+      ).toISOString(),
+      intervalDays: nextInterval,
+      streak: attempt.correct ? (currentReview?.streak ?? 0) + 1 : 0,
+      updatedAt: attempt.attemptedAt,
+    });
+  });
+
+  return [...reviews.values()];
+}
+
 function sameChoices(selected: readonly string[], correct: readonly string[]) {
   if (selected.length !== correct.length || new Set(selected).size !== selected.length)
     return false;
@@ -114,13 +142,15 @@ export async function toggleFavorite(
 ) {
   return database.transaction('rw', database.favorites, async () => {
     const existing = await database.favorites.get(questionId);
-    if (existing) {
-      await database.favorites.delete(questionId);
-      return false;
-    }
-
-    await database.favorites.add({ questionId, createdAt: now.toISOString() });
-    return true;
+    const timestamp = now.toISOString();
+    const isFavorite = !(existing?.isFavorite ?? false);
+    await database.favorites.put({
+      questionId,
+      isFavorite,
+      createdAt: existing?.createdAt ?? timestamp,
+      updatedAt: timestamp,
+    });
+    return isFavorite;
   });
 }
 

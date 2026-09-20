@@ -96,7 +96,9 @@ export interface StudyAttempt {
 
 export interface FavoriteQuestion {
   questionId: string;
+  isFavorite: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ReviewItem {

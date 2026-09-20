@@ -25,9 +25,14 @@ const attemptSchema = z.object({
   correct: z.boolean(),
 });
 
-const favoriteSchema = z.object({
+const favoriteV1Schema = z.object({
   questionId: z.string().min(1),
   createdAt: z.iso.datetime(),
+});
+
+const favoriteSchema = favoriteV1Schema.extend({
+  isFavorite: z.boolean(),
+  updatedAt: z.iso.datetime(),
 });
 
 const reviewSchema = z.object({
@@ -44,16 +49,33 @@ const settingSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
-export const studyBackupSchema = z.object({
+const backupDataV1Schema = z.object({
+  attempts: z.array(attemptSchema),
+  favorites: z.array(favoriteV1Schema),
+  reviews: z.array(reviewSchema),
+  settings: z.array(settingSchema),
+});
+
+const backupDataV2Schema = backupDataV1Schema.extend({
+  favorites: z.array(favoriteSchema),
+});
+
+export const studyBackupV1Schema = z.object({
   schemaVersion: z.literal(1),
   exportedAt: z.iso.datetime(),
-  data: z.object({
-    attempts: z.array(attemptSchema),
-    favorites: z.array(favoriteSchema),
-    reviews: z.array(reviewSchema),
-    settings: z.array(settingSchema),
-  }),
+  data: backupDataV1Schema,
 });
+
+export const studyBackupSchema = z.object({
+  schemaVersion: z.literal(2),
+  exportedAt: z.iso.datetime(),
+  data: backupDataV2Schema,
+});
+
+const supportedBackupSchema = z.discriminatedUnion('schemaVersion', [
+  studyBackupV1Schema,
+  studyBackupSchema,
+]);
 
 const MAX_BACKUP_BYTES = 2 * 1024 * 1024;
 
@@ -67,7 +89,7 @@ export async function exportStudyData(database: AgentPrepDatabase, now = new Dat
 
   return JSON.stringify(
     {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: now.toISOString(),
       data: { attempts, favorites, reviews, settings },
     },
@@ -88,7 +110,22 @@ export async function importStudyData(database: AgentPrepDatabase, text: string)
     throw new Error('Backup is not valid JSON.');
   }
 
-  const backup = studyBackupSchema.parse(raw);
+  const parsed = supportedBackupSchema.parse(raw);
+  const backup =
+    parsed.schemaVersion === 1
+      ? {
+          schemaVersion: 2 as const,
+          exportedAt: parsed.exportedAt,
+          data: {
+            ...parsed.data,
+            favorites: parsed.data.favorites.map((favorite) => ({
+              ...favorite,
+              isFavorite: true,
+              updatedAt: favorite.createdAt,
+            })),
+          },
+        }
+      : parsed;
   await database.transaction(
     'rw',
     [database.attempts, database.favorites, database.reviews, database.settings],

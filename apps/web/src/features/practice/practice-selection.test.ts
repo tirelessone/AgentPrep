@@ -84,10 +84,20 @@ describe('practice selection', () => {
     expect(questions.map((question) => question.id)).toEqual(['sse-001']);
   });
 
-  it('filters favorites with one primary-key scan', async () => {
+  it('filters active favorites while ignoring tombstones', async () => {
     await database.favorites.bulkAdd([
-      { questionId: 'agent-loop-001', createdAt: '2026-09-19T10:00:00.000Z' },
-      { questionId: 'temperature-determinism-001', createdAt: '2026-09-19T10:00:00.000Z' },
+      {
+        questionId: 'agent-loop-001',
+        isFavorite: true,
+        createdAt: '2026-09-19T10:00:00.000Z',
+        updatedAt: '2026-09-19T10:00:00.000Z',
+      },
+      {
+        questionId: 'temperature-determinism-001',
+        isFavorite: false,
+        createdAt: '2026-09-19T10:00:00.000Z',
+        updatedAt: '2026-09-19T11:00:00.000Z',
+      },
     ]);
     const questions = await selectPracticeQuestions(database, questionPrompts, {
       subject: 'agent',

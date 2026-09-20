@@ -73,7 +73,10 @@ function QuestionSession({
   const previousQuestionsRef = useRef(questions);
   const question = questions[index];
   const favoriteIds = useLiveQuery(
-    async () => (await db.favorites.toCollection().primaryKeys()).map(String),
+    async () =>
+      (await db.favorites.filter((favorite) => favorite.isFavorite).toArray()).map(
+        (favorite) => favorite.questionId,
+      ),
     [],
     [] as string[],
   );
@@ -257,7 +260,7 @@ function DataCenter({ contentVersion }: { contentVersion: string }) {
   const counts = useLiveQuery(
     async () => ({
       attempts: await db.attempts.count(),
-      favorites: await db.favorites.count(),
+      favorites: await db.favorites.filter((favorite) => favorite.isFavorite).count(),
       reviews: await db.reviews.count(),
     }),
     [],
@@ -328,7 +331,7 @@ function DataCenter({ contentVersion }: { contentVersion: string }) {
           {message}
         </p>
       )}
-      <small>存储 Schema v2 · 备份 Schema v1 · 题库 {contentVersion}</small>
+      <small>存储 Schema v3 · 备份 Schema v2 · 题库 {contentVersion}</small>
     </section>
   );
 }
@@ -341,7 +344,11 @@ function Dashboard({
   onNavigate: (view: View) => void;
 }) {
   const attemptCount = useLiveQuery(() => db.attempts.count(), [], 0);
-  const favoriteCount = useLiveQuery(() => db.favorites.count(), [], 0);
+  const favoriteCount = useLiveQuery(
+    () => db.favorites.filter((favorite) => favorite.isFavorite).count(),
+    [],
+    0,
+  );
   const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(db), [], []);
   const dueIds = useLiveQuery(() => getDueReviewQuestionIds(db), [], []);
 
@@ -408,7 +415,10 @@ function LoadedApp({ content }: { content: QuestionContent }) {
   const online = useOnlineStatus();
   const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(db), [], []);
   const favoriteIds = useLiveQuery(
-    async () => (await db.favorites.toCollection().primaryKeys()).map(String),
+    async () =>
+      (await db.favorites.filter((favorite) => favorite.isFavorite).toArray()).map(
+        (favorite) => favorite.questionId,
+      ),
     [],
     [] as string[],
   );
