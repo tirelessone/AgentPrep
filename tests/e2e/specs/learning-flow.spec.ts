@@ -40,7 +40,11 @@ test('keeps answers hidden until submission and persists wrong answers', async (
   await expect(page.getByRole('button', { name: '提交答案' })).toBeVisible();
   await expect(page.getByText(/模型只能提出结构化工具调用/)).toHaveCount(0);
 
-  await page.locator('label.choice').filter({ hasText: '把系统提示词拼到用户消息前' }).click();
+  await page
+    .locator('label.choice')
+    .filter({ hasText: '把系统提示词拼到用户消息前' })
+    .locator('input')
+    .check({ force: true });
   await page.getByRole('button', { name: '提交答案' }).click();
   await expect(page.getByText('这次没答对')).toBeVisible();
   await expect(page.getByText(/模型只能提出结构化工具调用/)).toBeVisible();
@@ -82,8 +86,9 @@ test('syncs confirmed guest data, offline mutations, and isolates a second accou
 
   await startAgentPractice(page);
   await page.getByRole('button', { name: '收藏题目' }).click();
-  await page.locator('label.choice').first().click();
+  await page.locator('label.choice input').first().check({ force: true });
   await page.getByRole('button', { name: '提交答案' }).click();
+  await expect(page.locator('.answer-panel')).toBeVisible();
   await page.getByRole('button', { name: '返回 AgentPrep 首页' }).click();
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
@@ -100,12 +105,14 @@ test('syncs confirmed guest data, offline mutations, and isolates a second accou
   await context.setOffline(true);
   await page.getByRole('button', { name: '返回 AgentPrep 首页' }).click();
   await startAgentPractice(page);
-  await page.locator('label.choice').first().click();
+  await page.locator('label.choice input').first().check({ force: true });
   await page.getByRole('button', { name: '提交答案' }).click();
+  await expect(page.locator('.answer-panel')).toBeVisible();
   await page.getByRole('button', { name: '下一题' }).click();
   await page.getByRole('button', { name: '收藏题目' }).click();
-  await page.locator('label.choice').first().click();
+  await page.locator('label.choice input').first().check({ force: true });
   await page.getByRole('button', { name: '提交答案' }).click();
+  await expect(page.locator('.answer-panel')).toBeVisible();
   await page.reload();
   await expect(page.getByText('离线模式').last()).toBeVisible();
   await expect(page.getByRole('button', { name: /我的收藏 2 道已收藏/ })).toBeVisible();
@@ -171,7 +178,7 @@ test('completes a fixed 20-question random network session on a 390px mobile vie
     const chapter = await page.locator('.topic-row span').nth(1).textContent();
     if (chapter) chapters.add(chapter);
     if (index === 0) await page.getByRole('button', { name: '收藏题目' }).click();
-    await page.locator('label.choice').first().click();
+    await page.locator('label.choice input').first().check({ force: true });
     await page.getByRole('button', { name: '提交答案' }).click();
     await expect(page.locator('.answer-panel')).toBeVisible();
     await expect(page.locator('.answer-panel p')).not.toBeEmpty();
@@ -218,7 +225,7 @@ test('loads two real prompt images without blocking sequential practice', async 
       ).toBe(true);
       loadedImages += 1;
     }
-    await page.locator('label.choice').first().click();
+    await page.locator('label.choice input').first().check({ force: true });
     await page.getByRole('button', { name: '提交答案' }).click();
     await expect(page.locator('.answer-panel')).toBeVisible();
     if (index < 9) await page.getByRole('button', { name: '下一题' }).click();
@@ -301,7 +308,11 @@ test('shows Tutor only after submission and renders SSE output', async ({ page }
   await page.goto('/');
   await startAgentPractice(page);
   await expect(page.getByRole('heading', { name: 'AI Tutor' })).toHaveCount(0);
-  await page.locator('label.choice').filter({ hasText: '受控执行器校验并执行工具调用' }).click();
+  await page
+    .locator('label.choice')
+    .filter({ hasText: '受控执行器校验并执行工具调用' })
+    .locator('input')
+    .check({ force: true });
   await page.getByRole('button', { name: '提交答案' }).click();
   await expect(page.getByRole('heading', { name: 'AI Tutor' })).toBeVisible();
   await page.getByRole('button', { name: '询问 Tutor' }).click();
