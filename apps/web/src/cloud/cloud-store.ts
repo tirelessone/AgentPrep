@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { FavoriteQuestion, LocalSetting, StudyAttempt } from '@agentprep/domain';
 
-import { questionResponseSchema } from './types';
+import { cloudTimestampSchema, questionResponseSchema } from './types';
 import type { CloudStudyStore } from './types';
 
 export const CLOUD_PAGE_SIZE = 500;
@@ -14,7 +14,7 @@ const attemptRowSchema = z.object({
   id: z.uuid(),
   question_id: z.string().min(1),
   question_version: z.string().min(1),
-  attempted_at: z.iso.datetime(),
+  attempted_at: cloudTimestampSchema,
   selected_choice_ids: z.array(z.string().min(1)),
   response: questionResponseSchema.nullable(),
   correct: z.boolean(),
@@ -24,15 +24,15 @@ const favoriteRowSchema = z.object({
   user_id: z.uuid(),
   question_id: z.string().min(1),
   is_favorite: z.boolean(),
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
+  created_at: cloudTimestampSchema,
+  updated_at: cloudTimestampSchema,
 });
 
 const settingRowSchema = z.object({
   user_id: z.uuid(),
   key: z.string().min(1),
   value: z.unknown(),
-  updated_at: z.iso.datetime(),
+  updated_at: cloudTimestampSchema,
 });
 
 export async function fetchAllPages<T>(

@@ -119,6 +119,24 @@ describe('study reconciliation', () => {
     await expect(local.attempts.count()).resolves.toBe(0);
   });
 
+  it('pushes a local favorite when a cloud attempt uses a PostgreSQL timestamp offset', async () => {
+    const local = database('postgres-offset');
+    const cloud = new FakeCloudStudyStore();
+    cloud.attempts.set(
+      'cloud-attempt',
+      attempt('cloud-attempt', 'question-1', '2026-09-20T12:34:56.123+00:00', true),
+    );
+    await local.favorites.add(favorite('question-1', true, '2026-09-20T12:35:00.000Z'));
+
+    await expect(reconcileStudyState(local, cloud)).resolves.toMatchObject({
+      pushed: { favorites: 1 },
+    });
+    expect(cloud.favorites.get('question-1')).toMatchObject({ isFavorite: true });
+    await expect(local.attempts.get('cloud-attempt')).resolves.toMatchObject({
+      attemptedAt: '2026-09-20T12:34:56.123+00:00',
+    });
+  });
+
   it('coalesces concurrent reconcile triggers into one request', async () => {
     const local = database('mutex');
     const cloud = new FakeCloudStudyStore();

@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import type { FavoriteQuestion, LocalSetting, StudyAttempt } from '@agentprep/domain';
 
+export const cloudTimestampSchema = z.iso.datetime({ offset: true });
+
 export const questionResponseSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('single_choice'), selectedChoiceId: z.string().min(1) }),
   z.object({
@@ -19,7 +21,7 @@ export const studyAttemptSchema: z.ZodType<StudyAttempt> = z.object({
   id: z.string().min(1),
   questionId: z.string().min(1),
   questionVersion: z.string().min(1),
-  attemptedAt: z.iso.datetime(),
+  attemptedAt: cloudTimestampSchema,
   selectedChoiceIds: z.array(z.string().min(1)),
   response: questionResponseSchema.optional(),
   correct: z.boolean(),
@@ -28,14 +30,14 @@ export const studyAttemptSchema: z.ZodType<StudyAttempt> = z.object({
 export const favoriteStateSchema: z.ZodType<FavoriteQuestion> = z.object({
   questionId: z.string().min(1),
   isFavorite: z.boolean(),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  createdAt: cloudTimestampSchema,
+  updatedAt: cloudTimestampSchema,
 });
 
 export const localSettingSchema: z.ZodType<LocalSetting> = z.object({
   key: z.string().min(1),
   value: z.unknown(),
-  updatedAt: z.iso.datetime(),
+  updatedAt: cloudTimestampSchema,
 });
 
 export const syncableSettingKeys = new Set(['theme', 'practice-count', 'practice-order']);

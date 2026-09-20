@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { ZodError } from 'zod';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -9,6 +10,21 @@ import {
   SupabaseCloudStudyStore,
   writeInChunks,
 } from './cloud-store';
+
+const userId = '11111111-1111-4111-8111-111111111111';
+
+function readClient(rows: Record<string, readonly unknown[]>) {
+  return {
+    from: vi.fn((table: string) => {
+      const query: Record<string, unknown> = {};
+      query.select = vi.fn(() => query);
+      query.eq = vi.fn(() => query);
+      query.order = vi.fn(() => query);
+      query.range = vi.fn(async () => ({ error: null, data: rows[table] ?? [] }));
+      return query;
+    }),
+  } as unknown as SupabaseClient;
+}
 
 describe('Supabase cloud store batching', () => {
   it('paginates attempts until the final short page', async () => {
@@ -35,7 +51,6 @@ describe('Supabase cloud store batching', () => {
   it('always derives user_id from the authenticated store scope', async () => {
     const upsert = vi.fn(async () => ({ error: null }));
     const client = { from: vi.fn(() => ({ upsert })) } as unknown as SupabaseClient;
-    const userId = '11111111-1111-4111-8111-111111111111';
     const store = new SupabaseCloudStudyStore(client, userId);
 
     await store.upsertAttempts([
@@ -79,5 +94,62 @@ describe('Supabase cloud store batching', () => {
     const store = new SupabaseCloudStudyStore(client, '11111111-1111-4111-8111-111111111111');
 
     await expect(store.fetchAttempts()).rejects.toThrow('different user');
+  });
+});
+
+describe('Supabase cloud row timestamps', () => {
+  const attemptRow = {
+    user_id: userId,
+    id: '22222222-2222-4222-8222-222222222222',
+    question_id: 'question-1',
+    question_version: '2.1.0',
+    selected_choice_ids: ['a'],
+    response: null,
+    correct: true,
+  };
+
+  it('accepts PostgreSQL offsets for every timestamptz row field', async () => {
+    const timestamp = '2026-09-20T12:34:56.123+00:00';
+    const store = new SupabaseCloudStudyStore(
+      readClient({
+        study_attempts: [{ ...attemptRow, attempted_at: timestamp }],
+        favorite_states: [
+          {
+            user_id: userId,
+            question_id: 'question-1',
+            is_favorite: true,
+            created_at: timestamp,
+            updated_at: timestamp,
+          },
+        ],
+        user_settings: [{ user_id: userId, key: 'theme', value: 'light', updated_at: timestamp }],
+      }),
+      userId,
+    );
+
+    await expect(store.fetchAttempts()).resolves.toMatchObject([{ attemptedAt: timestamp }]);
+    await expect(store.fetchFavorites()).resolves.toMatchObject([
+      { createdAt: timestamp, updatedAt: timestamp },
+    ]);
+    await expect(store.fetchSettings()).resolves.toMatchObject([{ updatedAt: timestamp }]);
+  });
+
+  it('continues to accept Z-suffixed timestamps', async () => {
+    const timestamp = '2026-09-20T12:34:56.123Z';
+    const store = new SupabaseCloudStudyStore(
+      readClient({ study_attempts: [{ ...attemptRow, attempted_at: timestamp }] }),
+      userId,
+    );
+
+    await expect(store.fetchAttempts()).resolves.toMatchObject([{ attemptedAt: timestamp }]);
+  });
+
+  it('rejects invalid datetimes with the original Zod error', async () => {
+    const store = new SupabaseCloudStudyStore(
+      readClient({ study_attempts: [{ ...attemptRow, attempted_at: 'not-a-datetime' }] }),
+      userId,
+    );
+
+    await expect(store.fetchAttempts()).rejects.toBeInstanceOf(ZodError);
   });
 });
