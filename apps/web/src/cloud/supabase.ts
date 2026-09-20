@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { runtimePlatform } from '../runtime';
+
 export interface SupabaseBrowserConfig {
   url: string;
   publishableKey: string;
@@ -22,7 +24,7 @@ export function getSupabaseClient() {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: runtimePlatform === 'web',
       },
     });
   })();

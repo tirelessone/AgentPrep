@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 
+import { runtimePlatform, type RuntimePlatform } from './runtime';
+
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
-export function InstallButton() {
+export function InstallButton({ platform = runtimePlatform }: { platform?: RuntimePlatform }) {
   const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent>();
 
   useEffect(() => {
+    if (platform === 'desktop') return;
     const capture = (event: Event) => {
       event.preventDefault();
       setPromptEvent(event as BeforeInstallPromptEvent);
@@ -20,9 +23,9 @@ export function InstallButton() {
       window.removeEventListener('beforeinstallprompt', capture);
       window.removeEventListener('appinstalled', installed);
     };
-  }, []);
+  }, [platform]);
 
-  if (!promptEvent) return null;
+  if (platform === 'desktop' || !promptEvent) return null;
 
   return (
     <button

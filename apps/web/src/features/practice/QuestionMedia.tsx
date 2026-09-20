@@ -2,6 +2,8 @@ import { useState } from 'react';
 
 import type { QuestionMedia as QuestionMediaItem } from '@agentprep/domain';
 
+import { resolveAppAsset } from '../../runtime';
+
 function QuestionImage({ item }: { item: QuestionMediaItem }) {
   const [failed, setFailed] = useState(false);
 
@@ -16,7 +18,7 @@ function QuestionImage({ item }: { item: QuestionMediaItem }) {
   return (
     <img
       className="question-media-image"
-      src={item.src}
+      src={resolveAppAsset(item.src)}
       alt={item.alt}
       loading="lazy"
       decoding="async"

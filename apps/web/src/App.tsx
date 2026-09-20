@@ -23,6 +23,7 @@ import {
   type PracticeSelectionValue,
 } from './features/practice/practice-selection';
 import { InstallButton } from './InstallButton';
+import { getTutorAvailability, runtimePlatform, type RuntimePlatform } from './runtime';
 import { TutorPanel } from './TutorPanel';
 import {
   getDueReviewQuestionIds,
@@ -73,6 +74,7 @@ function QuestionSession({
   title,
   revealQuestion,
   onExit,
+  platform,
 }: {
   database: AgentPrepDatabase;
   onLocalMutation: () => void;
@@ -80,6 +82,7 @@ function QuestionSession({
   title: string;
   revealQuestion: QuestionContent['revealQuestion'];
   onExit: () => void;
+  platform: RuntimePlatform;
 }) {
   const [index, setIndex] = useState(0);
   const [response, setResponse] = useState<QuestionResponse>();
@@ -205,10 +208,20 @@ function QuestionSession({
               <p>{reveal.explanation}</p>
             </div>
             {question.type === 'single_choice' && reveal.type === 'single_choice' && (
-              <TutorAvailability prompt={question} reveal={reveal} attempt={attempt} />
+              <TutorAvailability
+                prompt={question}
+                reveal={reveal}
+                attempt={attempt}
+                platform={platform}
+              />
             )}
             {question.type === 'multiple_choice' && reveal.type === 'multiple_choice' && (
-              <TutorAvailability prompt={question} reveal={reveal} attempt={attempt} />
+              <TutorAvailability
+                prompt={question}
+                reveal={reveal}
+                attempt={attempt}
+                platform={platform}
+              />
             )}
           </>
         )}
@@ -277,15 +290,24 @@ function TutorAvailability({
   prompt,
   reveal,
   attempt,
+  platform,
 }: {
   prompt: Extract<QuestionPrompt, { type: 'single_choice' | 'multiple_choice' }>;
   reveal: Extract<QuestionReveal, { type: 'single_choice' | 'multiple_choice' }>;
   attempt: StudyAttempt;
+  platform: RuntimePlatform;
 }) {
-  if (import.meta.env.DEV || import.meta.env.MODE === 'e2e') {
+  const availability = getTutorAvailability(platform, import.meta.env.DEV, import.meta.env.MODE);
+  if (availability === 'enabled') {
     return <TutorPanel prompt={prompt} reveal={reveal} attempt={attempt} />;
   }
-  return <p className="notice">AI Tutor 尚未在此部署环境启用。</p>;
+  return (
+    <p className="notice">
+      {availability === 'desktop-disabled'
+        ? 'AI Tutor 尚未在桌面版启用。'
+        : 'AI Tutor 尚未在此部署环境启用。'}
+    </p>
+  );
 }
 
 function DataCenter({
@@ -484,7 +506,7 @@ function Dashboard({
   );
 }
 
-function LoadedApp({ content }: { content: QuestionContent }) {
+function LoadedApp({ content, platform }: { content: QuestionContent; platform: RuntimePlatform }) {
   const account = useAccount();
   const database = account.database;
   const { manifest: questionManifest, questionPrompts, revealQuestion } = content;
@@ -541,7 +563,7 @@ function LoadedApp({ content }: { content: QuestionContent }) {
           <span>AP</span> AgentPrep
         </button>
         <div className="topbar-actions">
-          <InstallButton />
+          <InstallButton platform={platform} />
           <button className="account-entry" onClick={() => setView('account')}>
             {account.user?.email ?? (account.authAvailable ? '登录 / 注册' : '仅本机')}
           </button>
@@ -580,6 +602,7 @@ function LoadedApp({ content }: { content: QuestionContent }) {
             title={sessionTitle}
             revealQuestion={revealQuestion}
             onExit={() => setView('home')}
+            platform={platform}
           />
         )}
         {view === 'data' && (
@@ -627,8 +650,10 @@ function LoadedApp({ content }: { content: QuestionContent }) {
 
 function QuestionContentApp({
   content: suppliedContent,
+  platform,
 }: {
   content?: QuestionContent | undefined;
+  platform: RuntimePlatform;
 }) {
   const [content, setContent] = useState<QuestionContent | undefined>(suppliedContent);
   const [loadError, setLoadError] = useState('');
@@ -674,21 +699,23 @@ function QuestionContentApp({
     );
   }
 
-  return <LoadedApp content={content} />;
+  return <LoadedApp content={content} platform={platform} />;
 }
 
 export function App({
   content,
   database,
   runtime,
+  platform = runtimePlatform,
 }: {
   content?: QuestionContent | undefined;
   database?: AgentPrepDatabase | undefined;
   runtime?: CloudRuntime | undefined;
+  platform?: RuntimePlatform | undefined;
 }) {
   return (
     <AccountProvider database={database} runtime={runtime}>
-      <QuestionContentApp content={content} />
+      <QuestionContentApp content={content} platform={platform} />
     </AccountProvider>
   );
 }

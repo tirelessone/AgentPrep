@@ -1,11 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
 
 import { App } from './App';
+import { runtimePlatform } from './runtime';
 import './styles.css';
 
-registerSW({ immediate: true });
+if (runtimePlatform === 'web') {
+  void import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true }));
+}
 
 async function bootstrap() {
   const runtime =

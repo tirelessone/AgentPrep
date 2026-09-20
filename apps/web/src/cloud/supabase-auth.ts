@@ -1,5 +1,6 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 
+import { runtimePlatform, type RuntimePlatform } from '../runtime';
 import type { AuthAdapter, AuthUser, SignUpCredentials } from './auth';
 
 function toAuthUser(user: User): AuthUser {
@@ -10,7 +11,10 @@ function toAuthUser(user: User): AuthUser {
 export class SupabaseAuthAdapter implements AuthAdapter {
   readonly available = true;
 
-  constructor(private readonly client: SupabaseClient) {}
+  constructor(
+    private readonly client: SupabaseClient,
+    private readonly platform: RuntimePlatform = runtimePlatform,
+  ) {}
 
   async getCurrentUser() {
     const { data, error } = await this.client.auth.getSession();
@@ -34,7 +38,7 @@ export class SupabaseAuthAdapter implements AuthAdapter {
   async signUp(credentials: SignUpCredentials) {
     const { data, error } = await this.client.auth.signUp({
       ...credentials,
-      options: { emailRedirectTo: window.location.origin },
+      ...(this.platform === 'web' ? { options: { emailRedirectTo: window.location.origin } } : {}),
     });
     if (error) throw new Error(error.message);
     return {

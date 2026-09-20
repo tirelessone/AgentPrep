@@ -5,6 +5,8 @@ import {
   type QuestionManifest,
 } from '@agentprep/question-schema';
 
+import { resolveAppAsset } from './runtime';
+
 export const publishedManifestUrls = [
   '/content/original-v2.json',
   '/content/408-network.json',
@@ -120,7 +122,7 @@ export function createQuestionContent(input: unknown): QuestionContent {
 export async function loadQuestionContent(fetcher: typeof fetch = fetch): Promise<QuestionContent> {
   const manifests = await Promise.all(
     publishedManifestUrls.map(async (url) => {
-      const response = await fetcher(url);
+      const response = await fetcher(resolveAppAsset(url));
       if (!response.ok) throw new Error(`Failed to load question manifest: ${url}`);
       const payload: unknown = await response.json();
       return payload;
