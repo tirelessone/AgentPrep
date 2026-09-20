@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "import:408-network": "tsx src/cli/import-408-network.ts",
     "import:legacy": "tsx src/cli/import-legacy.ts",
     "review": "tsx src/cli/review-content.ts",
     "content:report": "tsx src/cli/report-content.ts --write",
