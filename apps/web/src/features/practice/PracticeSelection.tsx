@@ -7,7 +7,11 @@ import {
   getAvailableSubjectSummaries,
   getChapterSummaries,
   practiceModeCatalog,
+  practiceOrderCatalog,
+  practiceQuestionCountCatalog,
   type PracticeMode,
+  type PracticeOrder,
+  type PracticeQuestionCount,
   type PracticeSelectionValue,
 } from './practice-selection';
 
@@ -18,12 +22,15 @@ export function PracticeSelection({
 }: {
   questions: readonly QuestionPrompt[];
   onBack: () => void;
-  onStart: (selection: PracticeSelectionValue) => void;
+  onStart: (selection: PracticeSelectionValue) => Promise<boolean>;
 }) {
   const subjects = useMemo(() => getAvailableSubjectSummaries(questions), [questions]);
   const [subject, setSubject] = useState<QuestionSubject>();
   const [chapter, setChapter] = useState('');
   const [mode, setMode] = useState<PracticeMode>('all');
+  const [count, setCount] = useState<PracticeQuestionCount>(20);
+  const [order, setOrder] = useState<PracticeOrder>('random');
+  const [emptyMessage, setEmptyMessage] = useState('');
   const chapters = useMemo(
     () => (subject ? getChapterSummaries(questions, subject) : []),
     [questions, subject],
@@ -56,6 +63,7 @@ export function PracticeSelection({
               onClick={() => {
                 setSubject(item.id);
                 setChapter('');
+                setEmptyMessage('');
               }}
             >
               <strong>{item.label}</strong>
@@ -70,7 +78,13 @@ export function PracticeSelection({
           <h3 id="scope-title">2. 选择范围</h3>
           <label>
             {getSubjectLabel(subject)}章节
-            <select value={chapter} onChange={(event) => setChapter(event.target.value)}>
+            <select
+              value={chapter}
+              onChange={(event) => {
+                setChapter(event.target.value);
+                setEmptyMessage('');
+              }}
+            >
               <option value="">全部章节（{subjectCount} 道题）</option>
               {chapters.map((item) => (
                 <option key={item.id} value={item.id} disabled={item.questionCount === 0}>
@@ -90,7 +104,10 @@ export function PracticeSelection({
                     name="practice-mode"
                     value={item.id}
                     checked={mode === item.id}
-                    onChange={() => setMode(item.id)}
+                    onChange={() => {
+                      setMode(item.id);
+                      setEmptyMessage('');
+                    }}
                   />
                   <span>{item.label}</span>
                 </label>
@@ -98,10 +115,58 @@ export function PracticeSelection({
             </div>
           </fieldset>
 
+          <fieldset>
+            <legend>4. 选择题量</legend>
+            <div className="mode-grid count-grid">
+              {practiceQuestionCountCatalog.map((item) => (
+                <label key={item.id} className={count === item.id ? 'selected' : ''}>
+                  <input
+                    type="radio"
+                    name="practice-count"
+                    value={item.id}
+                    checked={count === item.id}
+                    onChange={() => setCount(item.id)}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>5. 选择顺序</legend>
+            <div className="mode-grid">
+              {practiceOrderCatalog.map((item) => (
+                <label key={item.id} className={order === item.id ? 'selected' : ''}>
+                  <input
+                    type="radio"
+                    name="practice-order"
+                    value={item.id}
+                    checked={order === item.id}
+                    onChange={() => setOrder(item.id)}
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {emptyMessage && (
+            <p className="notice" role="status">
+              {emptyMessage}
+            </p>
+          )}
+
           <button
             className="primary-button full-width"
             disabled={selectedCount === 0}
-            onClick={() => onStart({ subject, chapter: chapter || undefined, mode })}
+            onClick={() => {
+              void onStart({ subject, chapter: chapter || undefined, mode, count, order }).then(
+                (started) => {
+                  setEmptyMessage(started ? '' : '当前范围没有符合条件的题目。');
+                },
+              );
+            }}
           >
             开始专项练习 <span>→</span>
           </button>

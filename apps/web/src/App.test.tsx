@@ -5,13 +5,18 @@ import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import originalManifest from '../../../content/manifests/original-v2.json';
+
 import { App } from './App';
-import { questionManifest } from './content';
+import { createQuestionContent } from './content';
 import { db } from './db';
+
+const originalContent = createQuestionContent(originalManifest);
 
 async function startAgentPractice() {
   fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
   fireEvent.click(screen.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }));
+  fireEvent.click(screen.getByLabelText('顺序'));
   fireEvent.click(screen.getByRole('button', { name: /开始专项练习/ }));
   await screen.findByText(/受控执行器校验并执行工具调用/);
 }
@@ -26,7 +31,7 @@ afterEach(async () => {
 
 describe('App', () => {
   it('starts a local practice without revealing the answer before submission', async () => {
-    render(<App />);
+    render(<App content={originalContent} />);
     await startAgentPractice();
 
     expect(screen.getByText(/受控执行器校验并执行工具调用/)).toBeInTheDocument();
@@ -43,7 +48,7 @@ describe('App', () => {
   });
 
   it('sends answers only after submission and cannot mutate the verified question', async () => {
-    const firstQuestion = questionManifest.questions[0]!;
+    const firstQuestion = originalContent.manifest.questions[0]!;
     if (firstQuestion.type !== 'single_choice')
       throw new Error('Expected the first demo to be single choice.');
     const verifiedAnswer = firstQuestion.correctChoiceId;
@@ -57,7 +62,7 @@ describe('App', () => {
     });
     vi.stubGlobal('fetch', fetcher);
 
-    render(<App />);
+    render(<App content={originalContent} />);
     await startAgentPractice();
     expect(fetcher).not.toHaveBeenCalled();
     fireEvent.click(screen.getByLabelText(/受控执行器校验并执行工具调用/));
@@ -71,7 +76,7 @@ describe('App', () => {
   });
 
   it('uses centralized Chinese taxonomy labels in selection and sessions', async () => {
-    render(<App />);
+    render(<App content={originalContent} />);
     fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
 
     expect(screen.getByRole('button', { name: /Agent \/ RAG.*7 道题/ })).toBeInTheDocument();
@@ -80,6 +85,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }));
     expect(screen.getByRole('option', { name: '运行时（4 道题）' })).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('顺序'));
     fireEvent.click(screen.getByRole('button', { name: /开始专项练习/ }));
 
     expect((await screen.findAllByText('Agent / RAG')).length).toBeGreaterThan(0);
@@ -90,7 +96,7 @@ describe('App', () => {
 
   it('offers the browser install prompt when available', async () => {
     const prompt = vi.fn(async () => undefined);
-    render(<App />);
+    render(<App content={originalContent} />);
     const event = new Event('beforeinstallprompt', { cancelable: true });
     Object.assign(event, {
       prompt,
@@ -100,5 +106,16 @@ describe('App', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: '安装应用' }));
     await waitFor(() => expect(prompt).toHaveBeenCalledOnce());
+  });
+
+  it('keeps an empty filtered session on the selection page with a clear message', async () => {
+    render(<App content={originalContent} />);
+    fireEvent.click(screen.getByRole('button', { name: /开始刷题/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }));
+    fireEvent.click(screen.getByLabelText('错题'));
+    fireEvent.click(screen.getByRole('button', { name: /开始专项练习/ }));
+
+    expect(await screen.findByText('当前范围没有符合条件的题目。')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '选择专项练习' })).toBeInTheDocument();
   });
 });

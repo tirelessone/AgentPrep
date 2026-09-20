@@ -2,6 +2,8 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+import { questionContentPlugin } from './vite-content-plugin';
+
 export default defineConfig({
   server: {
     proxy: {
@@ -10,9 +12,13 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    questionContentPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'question-assets/**/*'],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,json}'],
+      },
       manifest: {
         name: 'AgentPrep',
         short_name: 'AgentPrep',

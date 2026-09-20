@@ -3,8 +3,10 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import originalManifest from '../../../content/manifests/original-v2.json';
+
 import { exportStudyData, importStudyData } from './backup';
-import { questionPrompts, revealQuestion } from './content';
+import { createQuestionContent } from './content';
 import { AgentPrepDatabase } from './db';
 import {
   getDueReviewQuestionIds,
@@ -12,6 +14,8 @@ import {
   recordAttempt,
   toggleFavorite,
 } from './study-service';
+
+const { questionPrompts, revealQuestion } = createQuestionContent(originalManifest);
 
 let database: AgentPrepDatabase;
 

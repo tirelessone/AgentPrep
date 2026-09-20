@@ -4,4 +4,5 @@ playwright-report
 test-results
 pnpm-lock.yaml
 content/PROVENANCE_REPORT.md
+content/external/408/*.json
 THIRD_PARTY_NOTICES.md

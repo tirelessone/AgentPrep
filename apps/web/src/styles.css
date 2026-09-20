@@ -321,6 +321,9 @@ h1 {
   font-size: 0.9rem;
   font-weight: 800;
 }
+.selection-options fieldset + fieldset {
+  margin-top: 1rem;
+}
 .mode-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -347,6 +350,9 @@ h1 {
 .mode-grid input {
   position: absolute;
   opacity: 0;
+}
+.count-grid {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .session {

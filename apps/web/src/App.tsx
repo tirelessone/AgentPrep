@@ -10,7 +10,7 @@ import type {
 import { getChapterLabel, getDifficultyLabel, getSubjectLabel } from '@agentprep/taxonomy';
 
 import { exportStudyData, importStudyData } from './backup';
-import { questionManifest, questionPrompts, revealQuestion } from './content';
+import { loadQuestionContent, type QuestionContent } from './content';
 import { db } from './db';
 import { PracticeSelection } from './features/practice/PracticeSelection';
 import { QuestionRenderer } from './features/practice/QuestionRenderer';
@@ -58,10 +58,12 @@ function useOnlineStatus() {
 function QuestionSession({
   questions,
   title,
+  revealQuestion,
   onExit,
 }: {
   questions: readonly QuestionPrompt[];
   title: string;
+  revealQuestion: QuestionContent['revealQuestion'];
   onExit: () => void;
 }) {
   const [index, setIndex] = useState(0);
@@ -249,7 +251,7 @@ function QuestionSession({
   );
 }
 
-function DataCenter() {
+function DataCenter({ contentVersion }: { contentVersion: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState('');
   const counts = useLiveQuery(
@@ -326,12 +328,18 @@ function DataCenter() {
           {message}
         </p>
       )}
-      <small>存储 Schema v2 · 备份 Schema v1 · 题库 {questionManifest.contentVersion}</small>
+      <small>存储 Schema v2 · 备份 Schema v1 · 题库 {contentVersion}</small>
     </section>
   );
 }
 
-function Dashboard({ onNavigate }: { onNavigate: (view: View) => void }) {
+function Dashboard({
+  questionCount,
+  onNavigate,
+}: {
+  questionCount: number;
+  onNavigate: (view: View) => void;
+}) {
   const attemptCount = useLiveQuery(() => db.attempts.count(), [], 0);
   const favoriteCount = useLiveQuery(() => db.favorites.count(), [], 0);
   const wrongIds = useLiveQuery(() => getLatestWrongQuestionIds(db), [], []);
@@ -384,15 +392,16 @@ function Dashboard({ onNavigate }: { onNavigate: (view: View) => void }) {
           <h2>每道题都有来路</h2>
         </div>
         <p>
-          当前 {questionManifest.questions.length} 道小样题均为 AgentPrep
-          原创并经人工审核。来源、版本、许可证和转换记录随 manifest 保存。
+          当前共 {questionCount} 道题。题库由 AgentPrep 原创内容与可追溯外部数据源组成，
+          每道外部题目保留来源与转换信息。
         </p>
       </section>
     </>
   );
 }
 
-export function App() {
+function LoadedApp({ content }: { content: QuestionContent }) {
+  const { manifest: questionManifest, questionPrompts, revealQuestion } = content;
   const [view, setView] = useState<View>('home');
   const [practiceSelection, setPracticeSelection] = useState<PracticeSelectionValue>();
   const [practiceQueue, setPracticeQueue] = useState<readonly QuestionPrompt[]>([]);
@@ -415,7 +424,7 @@ export function App() {
             ? dueIds
             : [];
     return questionPrompts.filter((question) => ids.includes(question.id));
-  }, [dueIds, favoriteIds, practiceQueue, view, wrongIds]);
+  }, [dueIds, favoriteIds, practiceQueue, questionPrompts, view, wrongIds]);
 
   const isSession = ['practice-session', 'wrong', 'favorites', 'review'].includes(view);
   const sessionTitle =
@@ -429,9 +438,11 @@ export function App() {
 
   async function startPractice(selection: PracticeSelectionValue) {
     const questions = await selectPracticeQuestions(db, questionPrompts, selection);
+    if (questions.length === 0) return false;
     setPracticeSelection(selection);
     setPracticeQueue(questions);
     setView('practice-session');
+    return true;
   }
 
   return (
@@ -450,18 +461,25 @@ export function App() {
       </header>
 
       <main>
-        {view === 'home' && <Dashboard onNavigate={setView} />}
+        {view === 'home' && (
+          <Dashboard questionCount={questionManifest.questions.length} onNavigate={setView} />
+        )}
         {view === 'practice-select' && (
           <PracticeSelection
             questions={questionPrompts}
             onBack={() => setView('home')}
-            onStart={(selection) => void startPractice(selection)}
+            onStart={startPractice}
           />
         )}
         {isSession && (
-          <QuestionSession questions={queue} title={sessionTitle} onExit={() => setView('home')} />
+          <QuestionSession
+            questions={queue}
+            title={sessionTitle}
+            revealQuestion={revealQuestion}
+            onExit={() => setView('home')}
+          />
         )}
-        {view === 'data' && <DataCenter />}
+        {view === 'data' && <DataCenter contentVersion={questionManifest.contentVersion} />}
       </main>
 
       <nav className="bottom-nav" aria-label="主导航">
@@ -495,4 +513,52 @@ export function App() {
       </nav>
     </div>
   );
+}
+
+export function App({ content: suppliedContent }: { content?: QuestionContent | undefined }) {
+  const [content, setContent] = useState<QuestionContent | undefined>(suppliedContent);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    if (suppliedContent) {
+      setContent(suppliedContent);
+      setLoadError('');
+      return;
+    }
+
+    let active = true;
+    void loadQuestionContent()
+      .then((loaded) => {
+        if (active) setContent(loaded);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setLoadError(error instanceof Error ? error.message : '题库加载失败。');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [suppliedContent]);
+
+  if (!content) {
+    return (
+      <div className="app-shell">
+        <main>
+          <section className="empty-state" aria-live="polite">
+            <span aria-hidden="true">{loadError ? '!' : '…'}</span>
+            <h2>{loadError ? '题库暂时无法加载' : '正在准备题库'}</h2>
+            <p>{loadError || '正在校验原创内容与计算机网络题库。'}</p>
+            {loadError && (
+              <button className="primary-button" onClick={() => window.location.reload()}>
+                重新加载
+              </button>
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  return <LoadedApp content={content} />;
 }

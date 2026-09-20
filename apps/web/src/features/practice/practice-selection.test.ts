@@ -2,16 +2,22 @@ import 'fake-indexeddb/auto';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { StudyAttempt } from '@agentprep/domain';
+import type { QuestionPrompt, StudyAttempt } from '@agentprep/domain';
 
-import { questionPrompts } from '../../content';
+import originalManifest from '../../../../../content/manifests/original-v2.json';
+
+import { createQuestionContent } from '../../content';
 import { AgentPrepDatabase } from '../../db';
 import {
   filterQuestionsByTaxonomy,
   getAvailableSubjectSummaries,
   getChapterSummaries,
   selectPracticeQuestions,
+  shuffleQuestions,
 } from './practice-selection';
+
+const questionPrompts = createQuestionContent(originalManifest).questionPrompts;
+const sequentialAll = { count: 'all', order: 'sequential' } as const;
 
 let database: AgentPrepDatabase;
 
@@ -57,6 +63,7 @@ describe('practice selection', () => {
     const questions = await selectPracticeQuestions(database, questionPrompts, {
       subject: 'agent',
       mode: 'unattempted',
+      ...sequentialAll,
     });
     expect(questions).toHaveLength(6);
     expect(questions.map((question) => question.id)).not.toContain('agent-loop-001');
@@ -72,6 +79,7 @@ describe('practice selection', () => {
     const questions = await selectPracticeQuestions(database, questionPrompts, {
       subject: 'agent',
       mode: 'wrong',
+      ...sequentialAll,
     });
     expect(questions.map((question) => question.id)).toEqual(['sse-001']);
   });
@@ -84,6 +92,7 @@ describe('practice selection', () => {
     const questions = await selectPracticeQuestions(database, questionPrompts, {
       subject: 'agent',
       mode: 'favorite',
+      ...sequentialAll,
     });
     expect(questions.map((question) => question.id)).toEqual(['agent-loop-001']);
   });
@@ -92,9 +101,52 @@ describe('practice selection', () => {
     const questions = await selectPracticeQuestions(database, questionPrompts, {
       subject: 'agent',
       mode: 'all',
+      ...sequentialAll,
     });
     expect(new Set(questions.map((question) => question.type))).toEqual(
       new Set(['single_choice', 'multiple_choice', 'oral']),
     );
+  });
+
+  it('creates deterministic random queues of 20 and 50 questions', async () => {
+    const questions = Array.from({ length: 60 }, (_, index) => ({
+      ...questionPrompts[0]!,
+      id: `generated-${String(index).padStart(2, '0')}`,
+    })) satisfies QuestionPrompt[];
+    const random = () => 0;
+
+    const twenty = await selectPracticeQuestions(
+      database,
+      questions,
+      { subject: 'agent', mode: 'all', count: 20, order: 'random' },
+      random,
+    );
+    const fifty = await selectPracticeQuestions(
+      database,
+      questions,
+      { subject: 'agent', mode: 'all', count: 50, order: 'random' },
+      random,
+    );
+    expect(twenty).toHaveLength(20);
+    expect(fifty).toHaveLength(50);
+    expect(twenty.map(({ id }) => id)).toEqual(
+      shuffleQuestions(questions, random)
+        .slice(0, 20)
+        .map(({ id }) => id),
+    );
+  });
+
+  it('keeps source order and all questions for a sequential all-sized queue', async () => {
+    const questions = Array.from({ length: 60 }, (_, index) => ({
+      ...questionPrompts[0]!,
+      id: `sequential-${String(index).padStart(2, '0')}`,
+    })) satisfies QuestionPrompt[];
+    const selected = await selectPracticeQuestions(database, questions, {
+      subject: 'agent',
+      mode: 'all',
+      count: 'all',
+      order: 'sequential',
+    });
+    expect(selected.map(({ id }) => id)).toEqual(questions.map(({ id }) => id));
   });
 });

@@ -1,0 +1,128 @@
+{
+  "sourceVersion": "267d0d815b1eee770dad12e88bbd560d08ba3f66",
+  "inputSha256": "5baf510df78f660458daefebdffa3503acc5f9a7c703d4f5282576e5589ef2fd",
+  "sourceTotal": 2386,
+  "networkTotal": 529,
+  "imported": 521,
+  "skipped": 8,
+  "singleChoiceImported": 521,
+  "multipleChoiceSkipped": 6,
+  "chapterCounts": {
+    "network_architecture": 55,
+    "physical_layer": 47,
+    "data_link_layer": 147,
+    "network_layer": 126,
+    "transport_layer": 83,
+    "application_layer": 63
+  },
+  "invalidAnswerCount": 0,
+  "invalidOptionsCount": 0,
+  "unknownChapterCount": 0,
+  "missingPromptImageCount": 0,
+  "unsupportedExplanationImageCount": 12,
+  "hiddenOrBadCount": 4,
+  "invalidUpstreamCount": 0,
+  "explanationMediaRequiredCount": 0,
+  "imageQuestionCount": 32,
+  "copiedImageCount": 33,
+  "skippedIds": [
+    {
+      "id": "计算机网络_3-4-3_01",
+      "reasons": [
+        "hidden_or_bad",
+        "unsupported_or_unreliable_type"
+      ]
+    },
+    {
+      "id": "计算机网络_3-4-3_02",
+      "reasons": [
+        "unsupported_or_unreliable_type"
+      ]
+    },
+    {
+      "id": "计算机网络_3-4-3_04",
+      "reasons": [
+        "unsupported_or_unreliable_type"
+      ]
+    },
+    {
+      "id": "计算机网络_3-5-4_02",
+      "reasons": [
+        "hidden_or_bad",
+        "unsupported_or_unreliable_type"
+      ]
+    },
+    {
+      "id": "计算机网络_3-5-4_04",
+      "reasons": [
+        "unsupported_or_unreliable_type"
+      ]
+    },
+    {
+      "id": "计算机网络_4-3-5_02",
+      "reasons": [
+        "hidden_or_bad"
+      ]
+    },
+    {
+      "id": "计算机网络_4-3-5_03",
+      "reasons": [
+        "hidden_or_bad"
+      ]
+    },
+    {
+      "id": "计算机网络_5-3-7_02",
+      "reasons": [
+        "unsupported_or_unreliable_type"
+      ]
+    }
+  ],
+  "promptImageQuestionIds": [
+    "计算机网络_1-1-7_11",
+    "计算机网络_1-1-7_12",
+    "计算机网络_1-1-7_13",
+    "计算机网络_1-1-7_15",
+    "计算机网络_1-1-7_17",
+    "计算机网络_1-2-4_10",
+    "计算机网络_1-2-4_37",
+    "计算机网络_2-1-4_08",
+    "计算机网络_2-1-4_20",
+    "计算机网络_2-1-4_22",
+    "计算机网络_2-1-4_23",
+    "计算机网络_2-1-4_25",
+    "计算机网络_3-4-3_31",
+    "计算机网络_3-6-5_31",
+    "计算机网络_3-6-5_42",
+    "计算机网络_3-6-5_46",
+    "计算机网络_3-8-4_13",
+    "计算机网络_3-8-4_18",
+    "计算机网络_3-8-4_21",
+    "计算机网络_3-8-4_23",
+    "计算机网络_4-2-8_45",
+    "计算机网络_4-2-8_53",
+    "计算机网络_4-2-8_58",
+    "计算机网络_4-2-8_71",
+    "计算机网络_4-2-8_72",
+    "计算机网络_4-4-6_22",
+    "计算机网络_4-7-4_18",
+    "计算机网络_4-7-4_21",
+    "计算机网络_5-3-7_56",
+    "计算机网络_5-3-7_60",
+    "计算机网络_6-2-4_14",
+    "计算机网络_6-4-4_08"
+  ],
+  "unsupportedExplanationImageIds": [
+    "计算机网络_1-1-7_02",
+    "计算机网络_1-1-7_03",
+    "计算机网络_1-1-7_11",
+    "计算机网络_3-3-3_02",
+    "计算机网络_3-4-3_31",
+    "计算机网络_3-6-5_26",
+    "计算机网络_4-7-4_21",
+    "计算机网络_5-1-4_02",
+    "计算机网络_5-1-4_05",
+    "计算机网络_5-3-7_59",
+    "计算机网络_6-5-3_14",
+    "计算机网络_6-5-3_18"
+  ]
+}

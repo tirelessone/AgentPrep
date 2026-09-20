@@ -4,6 +4,15 @@ import AxeBuilder from '@axe-core/playwright';
 async function startAgentPractice(page: Page) {
   await page.getByRole('button', { name: /开始刷题/ }).click();
   await page.getByRole('button', { name: /Agent \/ RAG.*7 道题/ }).click();
+  await page.getByLabel('顺序').click();
+  await page.getByRole('button', { name: /开始专项练习/ }).click();
+}
+
+async function chooseNetworkPractice(page: Page, order: '随机' | '顺序') {
+  await page.getByRole('button', { name: /开始刷题/ }).click();
+  await page.getByRole('button', { name: /计算机网络.*521 道题/ }).click();
+  await page.getByLabel('20', { exact: true }).click();
+  await page.getByLabel(order, { exact: true }).click();
   await page.getByRole('button', { name: /开始专项练习/ }).click();
 }
 
@@ -21,10 +30,12 @@ test('keeps answers hidden until submission and persists wrong answers', async (
 
   await page.reload();
   await expect(page.getByRole('button', { name: /错题回看 1 道待巩固/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /今日复习 1 道已到期/ })).toBeVisible();
 });
 
 test('loads the installed shell while offline', async ({ page, context }) => {
   await page.goto('/');
+  await expect(page.getByText(/当前共 529 道题/)).toBeVisible();
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
@@ -36,9 +47,87 @@ test('loads the installed shell while offline', async ({ page, context }) => {
     await expect(
       page.getByRole('status', { name: '' }).filter({ hasText: '离线模式' }),
     ).toBeVisible();
+    await page.getByRole('button', { name: /开始刷题/ }).click();
+    await expect(page.getByRole('button', { name: /计算机网络.*521 道题/ })).toBeVisible();
   } finally {
     await context.setOffline(false);
   }
+});
+
+test('completes a fixed 20-question random network session on a 390px mobile viewport', async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    let seed = 408;
+    Math.random = () => {
+      seed = (seed * 1_664_525 + 1_013_904_223) % 4_294_967_296;
+      return seed / 4_294_967_296;
+    };
+  });
+  await page.goto('/');
+  await chooseNetworkPractice(page, '随机');
+  await expect(page.getByRole('heading', { name: '1 / 20' })).toBeVisible();
+
+  const chapters = new Set<string>();
+  for (let index = 0; index < 20; index += 1) {
+    const chapter = await page.locator('.topic-row span').nth(1).textContent();
+    if (chapter) chapters.add(chapter);
+    if (index === 0) await page.getByRole('button', { name: '收藏题目' }).click();
+    await page.locator('label.choice').first().click();
+    await page.getByRole('button', { name: '提交答案' }).click();
+    await expect(page.locator('.answer-panel')).toBeVisible();
+    await expect(page.locator('.answer-panel p')).not.toBeEmpty();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    await page.getByRole('button', { name: index === 19 ? '完成练习' : '下一题' }).click();
+  }
+
+  expect(chapters.size).toBeGreaterThan(1);
+  await expect(page.getByRole('button', { name: /我的收藏 1 道已收藏/ })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: /我的收藏 1 道已收藏/ })).toBeVisible();
+  await page.getByRole('button', { name: /我的收藏 1 道已收藏/ }).click();
+  await expect(page.getByRole('heading', { name: '1 / 1' })).toBeVisible();
+  await page.getByRole('button', { name: '返回 AgentPrep 首页' }).click();
+  await page.getByRole('button', { name: /开始刷题/ }).click();
+  await page.getByRole('button', { name: /计算机网络.*521 道题/ }).click();
+  await page.getByLabel('未做题').click();
+  await page.getByLabel('顺序', { exact: true }).click();
+  await page.getByRole('button', { name: /开始专项练习/ }).click();
+  await expect(page.getByRole('heading', { name: '1 / 20' })).toBeVisible();
+});
+
+test('loads two real prompt images without blocking sequential practice', async ({ page }) => {
+  test.setTimeout(45_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await chooseNetworkPractice(page, '顺序');
+
+  let loadedImages = 0;
+  for (let index = 0; index < 10; index += 1) {
+    const images = page.locator('.question-media img');
+    const imageCount = await images.count();
+    for (let imageIndex = 0; imageIndex < imageCount; imageIndex += 1) {
+      const image = images.nth(imageIndex);
+      await expect(image).toBeVisible();
+      await expect.poll(() => image.evaluate((element) => element.complete)).toBe(true);
+      expect(
+        await image.evaluate(
+          (element) =>
+            element.naturalWidth > 0 && element.scrollWidth <= element.parentElement!.clientWidth,
+        ),
+      ).toBe(true);
+      loadedImages += 1;
+    }
+    await page.locator('label.choice').first().click();
+    await page.getByRole('button', { name: '提交答案' }).click();
+    await expect(page.locator('.answer-panel')).toBeVisible();
+    if (index < 9) await page.getByRole('button', { name: '下一题' }).click();
+  }
+  expect(loadedImages).toBeGreaterThanOrEqual(2);
 });
 
 test('migrates a version 1 database without losing settings', async ({ page }) => {
