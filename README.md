@@ -149,11 +149,12 @@ AgentPrep 同时提供基于 Tauri 2 的 Windows 桌面构建。安装后的应�
 
 ```bash
 pnpm desktop:dev
+pnpm desktop:verify
 pnpm desktop:check
 pnpm desktop:build
 ```
 
-`desktop:build` 的 NSIS 输出位于 `apps/web/src-tauri/target/release/bundle/nsis/`。构建 Windows 安装包需要 Rust stable、Microsoft Visual Studio C++ Build Tools、Windows SDK 和 WebView2 Runtime；普通安装包用户不需要这些开发工具。Desktop v1 不启用 AI Tutor，也不包含 OpenAI API Key、Fastify sidecar、自动更新或邮箱 deep link。
+`desktop:verify` 校验构建后的 529 道题、题图文件、PWA 排除、禁止凭据模式和 JavaScript gzip 体积。`desktop:build` 的 NSIS 输出位于 `apps/web/src-tauri/target/release/bundle/nsis/`。构建 Windows 安装包需要 Rust stable、Microsoft Visual Studio C++ Build Tools、Windows SDK 和 WebView2 Runtime；普通安装包用户不需要这些开发工具。Desktop v1 不启用 AI Tutor，也不包含 OpenAI API Key、Fastify sidecar、自动更新或邮箱 deep link。
 
 浏览器站点与桌面应用使用不同的 IndexedDB origin。首次迁移时，在 Web 的“数据”页导出 JSON，再在 Desktop 的“数据”页导入；已启用 Supabase 的用户也可以登录同一账号同步。详细说明见 [Windows Desktop 文档](docs/desktop.md)。
 

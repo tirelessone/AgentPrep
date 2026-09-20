@@ -36,11 +36,12 @@ Tauri 会自动以 desktop mode 启动 Vite，再打开 native window；不需�
 
 ```bash
 pnpm desktop:check:frontend
+pnpm desktop:verify
 pnpm desktop:check
 pnpm desktop:build
 ```
 
-`desktop:check` 先验证 Desktop frontend，再对 `apps/web/src-tauri/Cargo.toml` 运行 `cargo check`。`desktop:build` 生成 x64 NSIS setup，默认输出：
+`desktop:verify` 对比 source/dist 题库与题图哈希，确认 Desktop 输出没有 service worker/PWA runtime 或禁止的凭据模式，并记录 JavaScript gzip 大小。`desktop:check` 依次构建、执行该验证器，再对 `apps/web/src-tauri/Cargo.toml` 运行 `cargo check`。`desktop:build` 生成 x64 NSIS setup，默认输出：
 
 ```text
 apps/web/src-tauri/target/release/bundle/nsis/AgentPrep_0.1.0_x64-setup.exe

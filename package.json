@@ -13,6 +13,7 @@
     "desktop:build": "pnpm --filter @agentprep/web desktop:build",
     "desktop:check": "pnpm --filter @agentprep/web desktop:check",
     "desktop:check:frontend": "pnpm --filter @agentprep/web build:desktop:frontend",
+    "desktop:verify": "pnpm --filter @agentprep/web desktop:verify",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
