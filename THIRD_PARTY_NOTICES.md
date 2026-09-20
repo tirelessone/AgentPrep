@@ -30,6 +30,7 @@ The Computer Network dataset is transformed by a dedicated importer from `https:
 | @supabase/realtime-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/realtime-js) |
 | @supabase/storage-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/storage-js) |
 | @supabase/supabase-js | 2.116.0 | MIT | [link](https://github.com/supabase/supabase-js/tree/master/packages/core/supabase-js) |
+| @tauri-apps/api | 2.11.1 | Apache-2.0 OR MIT | [link](https://github.com/tauri-apps/tauri#readme) |
 | @types/trusted-types | 2.0.7 | MIT | [link](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/trusted-types) |
 | abstract-logging | 2.0.1 | MIT | [link](https://github.com/jsumners/abstract-logging#readme) |
 | ajv | 8.20.0 | MIT | [link](https://ajv.js.org) |
