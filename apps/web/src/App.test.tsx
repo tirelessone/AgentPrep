@@ -88,7 +88,8 @@ describe('App', () => {
     fireEvent.click(screen.getByLabelText('顺序'));
     fireEvent.click(screen.getByRole('button', { name: /开始专项练习/ }));
 
-    expect((await screen.findAllByText('Agent / RAG')).length).toBeGreaterThan(0);
+    await screen.findByText(/受控执行器校验并执行工具调用/);
+    expect(screen.getAllByText('Agent / RAG').length).toBeGreaterThan(0);
     expect(screen.getByText('运行时')).toBeInTheDocument();
     expect(screen.getByText('基础')).toBeInTheDocument();
     expect(screen.queryByText('foundation')).not.toBeInTheDocument();
