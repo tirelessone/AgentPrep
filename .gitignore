@@ -5,6 +5,7 @@ playwright-report/
 test-results/
 .vite/
 apps/web/src-tauri/target/
+apps/web/src-tauri/gen/
 .env
 .env.*
 !.env.example
