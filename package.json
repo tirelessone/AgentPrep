@@ -9,6 +9,10 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter @agentprep/web --filter @agentprep/server dev",
+    "desktop:dev": "pnpm --filter @agentprep/web desktop:dev",
+    "desktop:build": "pnpm --filter @agentprep/web desktop:build",
+    "desktop:check": "pnpm --filter @agentprep/web desktop:check",
+    "desktop:check:frontend": "pnpm --filter @agentprep/web build:desktop:frontend",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

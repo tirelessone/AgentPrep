@@ -4,6 +4,7 @@ coverage/
 playwright-report/
 test-results/
 .vite/
+apps/web/src-tauri/target/
 .env
 .env.*
 !.env.example

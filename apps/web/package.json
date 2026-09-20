@@ -5,8 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:desktop": "vite --mode desktop --host 127.0.0.1 --port 1420",
     "build": "tsc --noEmit && vite build",
+    "build:desktop:frontend": "tsc --noEmit && vite build --mode desktop",
     "build:e2e": "tsc --noEmit && vite build --mode e2e",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build --bundles nsis",
+    "desktop:check": "pnpm build:desktop:frontend && cargo check --manifest-path src-tauri/Cargo.toml",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,6 +20,7 @@
     "@agentprep/taxonomy": "workspace:*",
     "@agentprep/tutor-core": "workspace:*",
     "@supabase/supabase-js": "2.116.0",
+    "@tauri-apps/api": "2.11.1",
     "dexie": "^4.2.0",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.1.1",
@@ -23,6 +29,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "2.11.5",
     "@vitejs/plugin-react": "^5.0.2",
     "vite": "^7.1.4",
     "vite-plugin-pwa": "^1.0.3"
