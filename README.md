@@ -2,24 +2,27 @@
 
 [![CI](https://github.com/tirelessone/AgentPrep/actions/workflows/ci.yml/badge.svg)](https://github.com/tirelessone/AgentPrep/actions/workflows/ci.yml)
 
-AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学习 PWA。它把刷题、错题、收藏、间隔复习和学习数据备份放在浏览器本地完成，并把可选的 AI Tutor 隔离在服务端，避免核心学习流程依赖网络或模型服务。
+AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学习 PWA。它把刷题、错题、收藏、间隔复习和学习数据备份优先放在浏览器本地完成；账号完全可选，登录后可通过 Supabase 在手机和电脑之间同步学习状态。可选 AI Tutor 仍隔离在服务端，核心学习流程不依赖网络或模型服务。
 
 项目同时提供可追溯的内容转换能力：每道外部题目保留来源、版本、仓库许可证、转换方式和审核状态，并在进入产品前通过专用 importer 与 schema 校验。
 
-> 当前状态：核心离线学习闭环、Question Domain v2、专项刷题、可选 AI Tutor、真实计算机网络题库、内容溯源和 CI 均已实现；账号、云同步、向量数据库、微服务和多智能体不在第一版范围。
+> 当前状态：核心离线学习闭环、Question Domain v2、专项刷题、真实计算机网络题库、可选账号、跨设备云同步、Vercel 部署配置、可选 AI Tutor、内容溯源和 CI 均已实现。仓库已 deployment-ready；真实 Supabase Project 和 Vercel Production Deployment 仍需项目维护者执行一次外部配置。
 
 ## 项目是否开发完成？
 
-按 [ROADMAP](ROADMAP.md) 定义的第一版范围，项目已经开发完成并通过自动化验证，可以用于本地学习、功能演示和作品集展示。但它不是包含所有未来能力的商业化成品：
+按 [ROADMAP](ROADMAP.md) 当前范围，项目代码已经完成并可用于本地学习、功能演示和作品集展示。生产账号能力需先按 [部署指南](docs/deployment.md) 配置 Supabase 与 Vercel；它仍不是包含所有未来能力的商业化成品：
 
 - 核心功能可直接使用：刷题、错题、收藏、到期复习、离线刷新、PWA 安装、学习数据导入导出。
+- 不登录时使用 Guest 本地模式；登录后 attempts、收藏和普通学习设置可跨设备同步，reviews 从 merged attempts 确定性重建。
 - AI Tutor 已实现，但属于可选在线增强；只有配置兼容 provider 后才会调用真实模型。
 - 仓库内置 AgentPrep 原创 Agent / LLM 示例内容，以及通过独立 importer 标准化的 408 Computer Network 题集。
-- 尚未提供账号、跨设备同步、运营后台和公共托管服务。
+- 尚未提供运营后台、社交系统、复杂 realtime/CRDT、云端 Tutor 或由仓库维护者提供的公共托管实例。
 
 ## 核心能力
 
 - **Local-first 学习闭环**：学习记录保存在 IndexedDB；Server 离线时仍可刷题、查看错题、收藏、复习和备份。
+- **可选账号与跨设备同步**：Email/Password Auth 由 Supabase 管理；所有学习操作先写 IndexedDB，联网后自动 reconcile。
+- **账号隔离**：每个用户拥有独立本地数据库，云端通过 Row Level Security 强制 `auth.uid() = user_id`。
 - **四类正式题型**：单选题、多选题、判断题和口述题分别建模；多选使用复选框，口述题通过参考答案与要点自评。
 - **结构化知识分类**：题目记录学科、章节、知识点、难度和 1–5 重要度，便于后续做可追溯的内容扩充。
 - **专项练习选择**：按有题目的学科、canonical 章节和全部/未做/错题/收藏模式生成稳定练习队列。
@@ -37,14 +40,16 @@ AgentPrep 是面向 Agent / LLM 岗秋招的 mobile-first、local-first AI 学�
 ## 架构概览
 
 ```text
-版本化题库 manifest ──> Web PWA ──> IndexedDB 学习记录
-                           │
-                           └─ 提交答案后 ─> Fastify SSE ─> OpenAI-compatible provider
+版本化静态题库 ──> Web PWA ──> IndexedDB（即时读写）
+                        │              │
+                        │              └─ 可选登录 ─> Supabase Auth + Study State + RLS
+                        │
+                        └─ 本地开发可选 ─> Fastify SSE ─> OpenAI-compatible provider
 
 外部内容 ─> 独立 importer ─> 校验与报告 ─> 发布 manifest
 ```
 
-题库、学习状态、UI 和模型适配器保持解耦。浏览器不保存 provider API Key，模型输出也不能回写或修改标准答案。详细设计见 [架构文档](docs/architecture.md) 和 [ADR](docs/adr)。
+题库、学习状态、UI、云存储和模型适配器保持解耦。浏览器只允许 Supabase public/publishable key，不保存 provider API Key、service role key 或密码；模型输出也不能回写或修改标准答案。详细设计见 [架构文档](docs/architecture.md) 和 [ADR](docs/adr)。
 
 ## 环境要求
 
@@ -71,6 +76,8 @@ pnpm --filter @agentprep/web dev
 ```
 
 浏览器打开 <http://localhost:5173>。刷题、错题、收藏、复习和数据导入导出均可使用；AI Tutor 会保持不可用或安全降级。
+
+如需本地测试账号同步，复制 `apps/web/.env.example` 为 `apps/web/.env.local`，只填写 Supabase Project URL 和 public/publishable key。未配置时不会报错，应用自动保持 Guest 模式。
 
 ### 方式二：同时启动 Web 与 Server
 
@@ -125,10 +132,12 @@ OPENAI_MODEL=gpt-4.1-mini
 4. 使用题目右上角按钮收藏题目；提交后查看结果、解析和下一题。
 5. 从首页进入“错题回看”“今日复习”或“我的收藏”，也可以使用底部导航切换练习与复习。
 6. 配置 Server 后，可在已提交的选择题下选择 Tutor 模式并提问；可随时取消流式请求。
-7. 在“数据”页导出 JSON 备份；换浏览器或清理数据前，可用同一页面恢复经过校验的备份。
-8. 在支持 PWA 安装的浏览器中点击“安装应用”，安装后可从系统入口打开。
+7. 可直接保持 Guest 模式；也可以从顶部“登录 / 注册”进入账号页。首次登录检测到 Guest 记录时，需明确选择是否合并。
+8. 登录后在账号页或“数据”页查看同步状态、最近同步时间并手动同步；离线操作会保留在本地，恢复联网后自动同步。
+9. 在“数据”页导出 JSON 备份；换浏览器或清理数据前，可用同一页面恢复经过校验的备份。
+10. 在支持 PWA 安装的浏览器中点击“安装应用”，安装后可从系统入口打开。
 
-学习记录保存在当前浏览器的 IndexedDB `agentprep` 数据库中。清除站点数据会删除本地学习记录，因此建议定期导出备份。
+Guest 学习记录保存在 IndexedDB `agentprep`；登录用户使用 `agentprep-user-<user-id>`，同一设备的不同账号不会共享缓存。清除站点数据会删除本地缓存，因此即使启用云同步也建议保留必要备份。
 
 ## 构建与验证
 
@@ -139,7 +148,7 @@ pnpm build
 pnpm --filter @agentprep/web preview
 ```
 
-静态预览可验证 Web 构建；生产环境如需 Tutor，必须按 [部署指南](docs/deployment.md) 将 `/api/*` 同源反向代理到 Fastify Server。
+静态预览可验证 Web 构建。当前 Vercel 阶段只部署 PWA 与 Supabase 学习同步，不部署 Fastify Tutor；完整一次性配置与 RLS 验收见 [部署指南](docs/deployment.md)。
 
 首次运行浏览器 E2E 前安装 Chromium：
 
@@ -173,6 +182,7 @@ pnpm test:e2e
 ```text
 apps/web                 React + Vite PWA 与 IndexedDB 学习界面
 apps/server              可选 Fastify SSE API 与 provider adapter
+supabase/migrations      学习状态表、索引和 RLS 的正式 SQL migration
 packages/domain          共享领域类型
 packages/question-schema 题目、来源和审核状态的 Zod 契约
 packages/taxonomy        学科、章节及中文展示的 canonical catalog

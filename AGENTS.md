@@ -5,12 +5,14 @@
 ## 产品边界
 
 - AgentPrep 必须保持 mobile-first、local-first；核心学习路径不得依赖后端在线状态。
-- 第一版不加入账号、云同步、向量数据库、微服务或多智能体。
+- 允许使用 Supabase Auth、Supabase Postgres 与 RLS 实现可选账号和跨设备学习状态同步；不登录或云服务不可用时必须保留完整本地学习路径。
+- 不加入向量数据库、微服务、Kubernetes、消息队列、复杂 realtime 同步或多智能体。
 - 不复制外部 408 项目的应用代码。外部数据只能通过 `tools/importers` 的独立转换流程进入隔离区。
 - 不导入许可证不明确或明确禁止再分发的内容。
 - AI 不得修改标准答案；选择题提交前不得向模型或 UI 泄露标准答案。
 - AI 生成题一律标记为未验证，只有人工审核流程可以改变审核状态。
 - API Key 只允许存在于服务端环境变量中，不得写入客户端源码、Vite 环境变量或 Git。
+- 浏览器只允许持有 Supabase public/publishable key；禁止 service role key、数据库密码和用户密码进入源码、Git 或 AgentPrep 自有存储。
 
 ## 内容变更
 
@@ -27,6 +29,8 @@
 ## 工程约定
 
 - 保持题库、领域逻辑、UI 和服务端适配器解耦。
+- IndexedDB 是 UI 的本地读写源；云端写入只能 best-effort，失败不得回滚已成功的本地学习操作。
+- 不同登录账号必须使用隔离的本地数据库；Supabase 表必须启用基于 `auth.uid()` 的 RLS。
 - 共享边界优先使用 Zod schema，并从 schema 推导 TypeScript 类型。
 - 新功能必须包含与风险相称的单元、集成或 E2E 测试。
 - 每个阶段结束前运行 `pnpm format:check`、`pnpm lint`、`pnpm test`、`pnpm build` 和 `pnpm test:e2e`。

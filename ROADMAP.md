@@ -55,4 +55,12 @@
 - [x] 按学科、章节和全部/未做/错题/收藏模式生成练习队列
 - [x] 使用批量 IndexedDB 查询避免逐题 N+1 查询
 
-明确不在第一版范围：账号、云同步、向量数据库、微服务、多智能体。
+## Account + Cloud Sync + Production PWA
+
+- [x] 将收藏升级为 tombstone + LWW，并迁移到 Dexie v3、Backup v2
+- [x] 按 Supabase user id 隔离本地数据库，并保留 Guest 模式与确认式本机记录合并
+- [x] 以 append-only attempts、LWW favorites/settings 和派生 reviews 实现双向 reconcile
+- [x] 接入可选 Supabase Email/Password Auth、Postgres、RLS 与运行时远端数据校验
+- [x] 增加 Vercel 静态 PWA 配置、移动端账号体验和无 secrets 的 Fake Cloud E2E
+
+仍不在当前范围：向量数据库、微服务、复杂 realtime/CRDT、多智能体、管理员后台、社交功能和 Tutor 公网部署。
