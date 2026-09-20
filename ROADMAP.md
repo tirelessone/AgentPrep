@@ -63,4 +63,12 @@
 - [x] 接入可选 Supabase Email/Password Auth、Postgres、RLS 与运行时远端数据校验
 - [x] 增加 Vercel 静态 PWA 配置、移动端账号体验和无 secrets 的 Fake Cloud E2E
 
+## Windows Desktop App
+
+- [x] 在现有 React/Vite 应用内加入 Tauri 2 Windows shell，不复制前端
+- [x] 分离 Web/PWA 与 Desktop build mode，并让桌面包直接加载内置静态题库
+- [x] 保留 Dexie/IndexedDB、可选 Supabase 同步和浏览器备份迁移路径
+- [x] 在 Desktop dev/production 中隐藏 PWA 安装入口并禁用 AI Tutor
+- [ ] 在具备 MSVC C++ Build Tools 与 Windows SDK 的机器上生成、安装并完成 NSIS 离线 smoke test
+
 仍不在当前范围：向量数据库、微服务、复杂 realtime/CRDT、多智能体、管理员后台、社交功能和 Tutor 公网部署。

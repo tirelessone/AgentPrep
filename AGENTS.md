@@ -5,8 +5,10 @@
 ## 产品边界
 
 - AgentPrep 必须保持 mobile-first、local-first；核心学习路径不得依赖后端在线状态。
+- 允许使用 Tauri 2 提供 Windows 原生壳与安装包；React/Vite 业务逻辑继续由 TypeScript 维护，除非确有必要的 native capability，否则不要迁入 Rust。
 - 允许使用 Supabase Auth、Supabase Postgres 与 RLS 实现可选账号和跨设备学习状态同步；不登录或云服务不可用时必须保留完整本地学习路径。
 - 不加入向量数据库、微服务、Kubernetes、消息队列、复杂 realtime 同步或多智能体。
+- 不引入 Electron、桌面 sidecar、全文件系统/任意 shell 权限或其他不必要的桌面原生复杂度。
 - 不复制外部 408 项目的应用代码。外部数据只能通过 `tools/importers` 的独立转换流程进入隔离区。
 - 不导入许可证不明确或明确禁止再分发的内容。
 - AI 不得修改标准答案；选择题提交前不得向模型或 UI 泄露标准答案。

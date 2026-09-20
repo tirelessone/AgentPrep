@@ -139,6 +139,24 @@ OPENAI_MODEL=gpt-4.1-mini
 
 Guest 学习记录保存在 IndexedDB `agentprep`；登录用户使用 `agentprep-user-<user-id>`，同一设备的不同账号不会共享缓存。清除站点数据会删除本地缓存，因此即使启用云同步也建议保留必要备份。
 
+## Windows Desktop
+
+AgentPrep 同时提供基于 Tauri 2 的 Windows 桌面构建。安装后的应用从安装包内加载 React UI、529 道当前题目与题图，日常启动不需要 Node.js、pnpm、PowerShell、localhost 或任何 Web 部署。IndexedDB 仍是本地学习数据源；Supabase 未配置或暂时离线时，刷题、错题、收藏、复习与备份继续可用。
+
+普通用户从项目发布页下载 `AgentPrep_<version>_x64-setup.exe`，双击安装后从开始菜单或桌面入口启动。当前安装包未签名时，Windows SmartScreen 可能显示“Unknown publisher”；这表示没有购买代码签名证书。
+
+开发和构建：
+
+```bash
+pnpm desktop:dev
+pnpm desktop:check
+pnpm desktop:build
+```
+
+`desktop:build` 的 NSIS 输出位于 `apps/web/src-tauri/target/release/bundle/nsis/`。构建 Windows 安装包需要 Rust stable、Microsoft Visual Studio C++ Build Tools、Windows SDK 和 WebView2 Runtime；普通安装包用户不需要这些开发工具。Desktop v1 不启用 AI Tutor，也不包含 OpenAI API Key、Fastify sidecar、自动更新或邮箱 deep link。
+
+浏览器站点与桌面应用使用不同的 IndexedDB origin。首次迁移时，在 Web 的“数据”页导出 JSON，再在 Desktop 的“数据”页导入；已启用 Supabase 的用户也可以登录同一账号同步。详细说明见 [Windows Desktop 文档](docs/desktop.md)。
+
 ## 构建与验证
 
 生产构建：
